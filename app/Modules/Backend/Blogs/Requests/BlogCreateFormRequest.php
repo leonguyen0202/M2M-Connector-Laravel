@@ -25,7 +25,7 @@ class BlogCreateFormRequest extends FormRequest
     public function rules($prefix)
     {
         $rules = [
-            $prefix . '_title' => ['required', 'string', 'min:10', 'max:255', 'unique:blogs'],
+            $prefix . '_title' => ['required', 'string', 'min:10', 'max:100', 'unique:blogs'],
             $prefix . '_description' => ['required'],
         ];
 

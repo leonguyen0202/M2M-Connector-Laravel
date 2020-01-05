@@ -1,7 +1,7 @@
 @foreach ($posts as $post)
 <div class="col-md-4">
     <div class="card" style="width: 20rem;">
-        <img class="card-img-top" src="{{asset('images/posts/'.$post->background_image)}}" alt="Card image cap">
+        <img class="card-img-top" alt="Card image cap" src="{{ $post->media_url('card') }}">
         <div class="card-body">
             <h4 class="card-title">
                 @if ($post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'} != null)

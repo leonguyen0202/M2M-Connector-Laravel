@@ -42,9 +42,9 @@ blog-posts
             <br />
             <div class="row">
                 @foreach ($top_posts as $top)
-                <div class="col-md-3">
+                <div class="{{ (count($top_posts) % 4 == 0) ? 'col-md-3' : ( (count($top_posts) % 3 == 0) ? 'col-md-4' : 'col-md-6' ) }}">
                     <div class="card card-background"
-                        style="background-image: url( {{url(asset('images/posts/'.$top->background_image))}} )">
+                        style="background-image: url( {{ $top->media_url('card') }} )">
                         <div class="card-body">
                             <div class="card-title text-left">
                                 @if ( $top->{Cookie::get( strtolower(env('APP_NAME')) .'_language' ).'_slug' } != null )
@@ -74,7 +74,7 @@ blog-posts
         </div>
     </div>
     @endif
-    @if (!$posts->isEmpty())
+    @if ( $posts != null || !empty($posts))
     <div class="container">
         <div class="section">
             <h3 class="title text-center">
@@ -88,12 +88,12 @@ blog-posts
                         <div class="card-image">
                             @if ($post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} != null)
                                 <a href="{{route('blog.detail', $post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} )}}">
-                                    <img class="img rounded" src="{{$post->getMedia('blog-images')->getFirstMediaUrl('frontend')}}"
-                                        alt="{{$post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'} }}">
+                                    {{-- <img class="img rounded" src="{{$post->getMedia('blog-images')->getFirstMediaUrl('frontend')}}"
+                                        alt="{{$post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'} }}"> --}}
                                 </a>
                             @else
                                 <a href="{{route('blog.detail', $post->{Config::get('app.fallback_locale').'_slug' } )}}">
-                                    <img class="img rounded" src="{{$post->getMedia('blog-images')->getFirstMediaUrl('frontend')}}"
+                                    <img class="img rounded" src="{{ $post->media_url('card') }}"
                                         alt="{{$post->{Config::get('app.fallback_locale').'_title' } }}">
                                 </a>
                             @endif

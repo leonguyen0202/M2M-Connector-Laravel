@@ -29,15 +29,20 @@ class Blog extends Model implements HasMedia
     protected $table = 'blogs';
 
     /**
+     * Define Collection Name
+     */
+    protected $media_collection_name = 'blog-images';
+
+    /**
      * Defining new media collection
      *
      * @var null
      */
     public function registerMediaCollections()
     {
-        $this->addMediaCollection('blog-images')
+        $this->addMediaCollection($this->media_collection_name)
             ->registerMediaConversions(function (Media $media) {
-                $this->addMediaConversion('frontend')
+                $this->addMediaConversion('card')
                     ->width(350)
                     ->height(250);
 
@@ -127,27 +132,6 @@ class Blog extends Model implements HasMedia
         return $languages;
     }
 
-    protected function selectable_field()
-    {
-        $languages = array();
-
-        $db = DB::table('localization')->get();
-
-        for ($i = 0; $i < count($db); $i++) {
-            array_push($languages, ($db[$i])->locale_code . '_slug');
-            array_push($languages, ($db[$i])->locale_code . '_title');
-            array_push($languages, ($db[$i])->locale_code . '_description');
-        }
-
-        array_push($languages, 'background_image');
-
-        array_push($languages, 'categories');
-
-        array_push($languages, 'visits');
-
-        return $languages;
-    }
-
     public function getMetaAttribute($value)
     {
         return json_decode($value, true);
@@ -182,10 +166,15 @@ class Blog extends Model implements HasMedia
         return $this->belongsTo(User::class, 'author_id');
     }
 
-    // public function media()
-    // {
-    //     return $this->morphMany(Media::class, 'model');
-    // }
+    public function media()
+    {
+        return $this->morphMany(Media::class, 'model');
+    }
+
+    public function media_url($conversions)
+    {
+        return $this->getFirstMediaUrl($this->media_collection_name, $conversions);
+    }
 
     /**
      * $table->uuid('model_id');

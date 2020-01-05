@@ -86,7 +86,7 @@ return [
     /*
      * The class that contains the strategy for determining a media file's path.
      */
-    'path_generator' => App\Modules\Backend\Spatie\Models\PathGenerator::class,
+    'path_generator' => \App\Modules\Backend\Spatie\Models\PathGenerator::class,
 
     /*
      * Medialibrary will try to optimize all converted images by removing

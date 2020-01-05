@@ -38,7 +38,7 @@ class BlogController extends Controller
     {
         # parent::__construct();
         $this->middleware('auth');
-        $this->is_table_view = true;
+        $this->is_table_view = false;
         $this->posts = null;
         $this->config_locale = Config::get('app.fallback_locale');
         $this->upload_path = Developer::query()->where([['type', '=', 'upload']])->first();
@@ -53,10 +53,10 @@ class BlogController extends Controller
         // if (Cache::has('_' . Auth::id() . '_blog_data')) {
         //     $posts = Cache::get('_' . Auth::id() . '_blog_data');
         // } else {
-            $post = Auth::user()->has_blogs;
+            $posts = Auth::user()->has_blogs;
         // }
 
-        return DataTables::of($post)
+        return DataTables::of($posts)
             ->addColumn('title', function (Blog $post) {
                 // Get Cookie first
                 if ($post->{Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_title'} != null) {
@@ -106,12 +106,10 @@ class BlogController extends Controller
                 } else {
                     $slug = $post->{Config::get('app.fallback_locale') . '_slug'};
                 }
-                $explode = explode("/", $post->getFirstMediaUrl('blog-images','thumb'));
-                return $explode[0];
-                // ($post->getFirstMediaUrl("blog-images","thumb"))
-                // return "<img src='".asset( 'storage/20b870dbc33e18d6f915e3f0a956c6ce/conversions/xu8u0D6R0ebXuS2tCB4Q5tySnR2jISgYqjQtdWiawerhvdhX9WAzoJxSUxXF_1578154257-thumb.jpg' )."' alt='".$slug."'>";
-
-                return "<img src='".$post->getFirstMediaUrl("blog-images","thumb")."' alt='".$slug."'>";
+                return "OK";
+                // $url = $post->getFirstMediaUrl("blog-images","thumb");
+                return '<img src="' . $post->getFirstMediaUrl("blog-images","thumb") . '" />';
+                
                 
             })
             ->rawColumns(['background', 'categories', 'comments', 'action'])
@@ -132,33 +130,37 @@ class BlogController extends Controller
     }
 
     public function index()
-    {   
+    {
+        // $posts = Blog::select(['en_title','en_slug','en_description'])->where([
+        //     ['author_id', '=', Auth::id()]
+        // ]);
+
+        // dd($posts);
         // Cache::forget('_' . Auth::id() . '_blog_data');
         
-        $collect = collect([]);
+        $collection = collect([]);
 
         $posts = Auth::user()->has_blogs;
 
         foreach ($posts as $key => $value) {
-            $collect->push($value);
+            $collection->push($value);
         }
 
-        Cache::store('database')->put('_' . Auth::id() . '_blog_data', $collect, Config::get('cache.lifetime'));
+        Cache::store('database')->put('_' . Auth::id() . '_blog_data', $collection, Config::get('cache.lifetime'));
 
-        // if (Cache::has('_' . Auth::id() . '_blog_view')) {
-        //     $blog_view = Cache::get('_' . Auth::id() . '_blog_view');
+        if (Cache::has('_' . Auth::id() . '_blog_view')) {
+            $blog_view = Cache::get('_' . Auth::id() . '_blog_view');
 
-        //     if ($blog_view != 'table') {
-        //         $this->is_table_view = false;
-        //         if (Cache::has('_' . Auth::id() . '_blog_data')) {
-        //             $this->posts = Cache::get('_' . Auth::id() . '_blog_data');
-        //         } else {
-        //             $this->posts = Auth::user()->has_blogs;
-        //         }
-        //     }
+            if ($blog_view != 'table') {
+                $this->is_table_view = false;
+            }
+        }
+
+        // if (Cache::has('_' . Auth::id() . '_blog_data')) {
+        //     $this->posts = Cache::get('_' . Auth::id() . '_blog_data');
+        // } else {
+            $this->posts = Auth::user()->has_blogs;
         // }
-
-        $this->posts = Auth::user()->has_blogs;
 
         return view('Blogs::index')->with([
             'is_table_view' => $this->is_table_view,
@@ -219,6 +221,19 @@ class BlogController extends Controller
         }
 
         if ($request->hasFile('background_image_file')) {
+
+            Validator::make([$request->background_image_file], [
+                'background_image_file' => ['image', 'mimetypes:image/jpg, image/jpeg, image/png', 'max:3072']
+            ], [
+                'background_image_file.image' => 'Upload file need to be image',
+                'background_image_file.mimetypes' => 'We only accept JPEG, JPG or PNG',
+                'background_image_file.max' => 'Your file has exceed :max bytes'
+            ]);
+
+            if ($validator->fails()) {
+                return Redirect::back()->with('errors', $validator->errors()->all());
+            }
+
             $files = $request->file('background_image_file');
 
             $name = str_shuffle(Str::random(60)) . '_' . time();

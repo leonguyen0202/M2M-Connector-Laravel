@@ -87,6 +87,8 @@ class User extends Authenticatable
 
         array_push($languages, 'visits');
 
+        array_push($languages, 'id');
+
         return $languages;
     }
 
@@ -107,7 +109,7 @@ class User extends Authenticatable
 
     public function has_blogs()
     {
-        return $this->hasMany(Blog::class, 'author_id', 'id')->select($this->selectable_field());
+        return $this->hasMany(Blog::class, 'author_id', 'id');
     }
 
     public function has_events()

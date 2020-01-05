@@ -26,17 +26,6 @@
                         </tr>
                     </tfoot>
                     <tbody>
-                        @foreach ($posts as $item)
-                            <tr>
-                                <td>
-                                    {!! $item->getFirstMediaUrl('blog-images','thumb') !!}
-                                </td>
-                                <td>{{ split_sentence($item->en_title, 30,'...') }}</td>
-                                <td>Image</td>
-                                <td>Image</td>
-                                <td>Image</td>
-                            </tr>
-                        @endforeach
                     </tbody>
                 </table>
             </div>

@@ -20,7 +20,7 @@ class BlogCRUDJob implements ShouldQueue
 
     protected $array;
 
-    public $tries = 10;
+    public $tries = 1;
 
     /**
      * Create a new job instance.

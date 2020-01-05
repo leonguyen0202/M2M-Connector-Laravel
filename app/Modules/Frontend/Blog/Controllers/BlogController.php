@@ -50,12 +50,6 @@ class BlogController extends Controller
 
         $posts = Blog::query()->whereNotIn('id', $post_array_id)->orderBy('created_at', 'DESC')->first();
 
-        $posts = Blog::find('2fe23768-b74b-4ed1-9a4e-daa6461cad41');
-        
-        $media = $posts->getMedia('blog-images');
-        
-        dd($media->getUrl('thumb'));
-
         $events = Event::query()->orderBy('created_at', 'DESC')->limit(5)->get();
 
         $contributors = Blog::query()->select(
