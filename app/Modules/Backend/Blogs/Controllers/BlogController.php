@@ -38,7 +38,7 @@ class BlogController extends Controller
     {
         # parent::__construct();
         $this->middleware('auth');
-        $this->is_table_view = false;
+        $this->is_table_view = true;
         $this->posts = null;
         $this->config_locale = Config::get('app.fallback_locale');
         $this->upload_path = Developer::query()->where([['type', '=', 'upload']])->first();
@@ -106,13 +106,13 @@ class BlogController extends Controller
                 } else {
                     $slug = $post->{Config::get('app.fallback_locale') . '_slug'};
                 }
-                return "OK";
-                // $url = $post->getFirstMediaUrl("blog-images","thumb");
-                return '<img src="' . $post->getFirstMediaUrl("blog-images","thumb") . '" />';
+                if (!file_exists($post->media_url('thumb'))) {
+                    return "<img src='".$post->getFirstMediaUrl('blog-images')."' alt='".$slug."' style='width:50px;height:33px'>";   
+                }
                 
-                
+                return "<img src='". $post->media_url('thumb') ."' alt='".$slug."'>";
             })
-            ->rawColumns(['background', 'categories', 'comments', 'action'])
+            ->rawColumns(['background','categories', 'comments', 'action'])
             ->make(true);
     }
 
@@ -131,11 +131,6 @@ class BlogController extends Controller
 
     public function index()
     {
-        // $posts = Blog::select(['en_title','en_slug','en_description'])->where([
-        //     ['author_id', '=', Auth::id()]
-        // ]);
-
-        // dd($posts);
         // Cache::forget('_' . Auth::id() . '_blog_data');
         
         $collection = collect([]);
@@ -239,6 +234,10 @@ class BlogController extends Controller
             $name = str_shuffle(Str::random(60)) . '_' . time();
 
             $fileName = $name . '.' . $files->getClientOriginalExtension();
+
+            Storage::disk('upload')->putFileAs('', $files, $fileName);
+
+            // $request->background_image_file->move('images/upload/posts/', $fileName);
         } else {
             $fileName = 'default-background.jpg';
         }
@@ -257,12 +256,12 @@ class BlogController extends Controller
             # code... addMediaFromRequest
             $item = Blog::find($blog->id);
 
+            // $item->add_media_from_disk($name, $fileName);
+
             $item->addMedia($files)->usingName($name)->usingFileName($item->background_image)->toMediaCollection('blog-images');
+
+            // $item->addMediaFromDisk($item->background_image, 'upload')->usingName($name)->usingFileName($item->background_image)->toMediaCollection('blog-images');
         }
-        
-        // $posts->push(
-        //     (object) $array_object
-        // );
 
         $posts = collect([]);
         

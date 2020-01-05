@@ -226,3 +226,9 @@ if (!function_exists('array_flatten')) {
         return $return;
     }
 }
+
+if (!function_exists('IsNullOrEmptyString')) {
+    function IsNullOrEmptyString($str){
+        return (!isset($str) || trim($str) === '');
+    }
+}

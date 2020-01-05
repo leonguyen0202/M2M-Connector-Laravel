@@ -161,6 +161,14 @@ class Blog extends Model implements HasMedia
         return $query->whereIn($this->primaryKey, $post_id);
     }
 
+    public function get_disk_for_media()
+    {
+        /**
+         * See filesystem.php for more disks
+         */
+        return 'upload';
+    }
+
     public function author()
     {
         return $this->belongsTo(User::class, 'author_id');
@@ -174,6 +182,11 @@ class Blog extends Model implements HasMedia
     public function media_url($conversions)
     {
         return $this->getFirstMediaUrl($this->media_collection_name, $conversions);
+    }
+
+    public function add_media_from_disk($name, $fileName)
+    {
+        return $this->addMediaFromDisk($fileName, $this->get_disk_for_media())->usingName($name)->usingFileName($fileName)->toMediaCollection($this->media_collection_name);
     }
 
     /**
