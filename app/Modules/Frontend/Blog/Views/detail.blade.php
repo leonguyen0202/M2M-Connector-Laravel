@@ -29,7 +29,7 @@ blog-post
         style="background-image: url({{url(asset('images/posts/'. $blog->background_image))}});"> --}}
 
     <div class="page-header-image" data-parallax="true"
-        style="background-image: url({{ $blog->getFirstMediaUrl('blog-images','frontend') }});">
+        style="background-image: url({{ $blog->media_url('slider') }});">
     </div>
     <div class="content-center">
         <div class="row">
@@ -117,11 +117,12 @@ blog-post
                                 Categories:
                                 @foreach (($blog->categories) as $key => $value)
                                     @foreach ($value as $item)
-                                        <span class="label label-primary">
+                                        <span class="label label-primary" style="text-decoration: none;">
                                             <a href="{{route('category.detail', render_all_categories('slug', $item))}}"
-                                                style="text-decoration: none; color:red" onMouseOut="this.style.color='red'"
+                                                style="text-decoration: none;" onMouseOut="this.style.color='red'"
                                                 onMouseOver="this.style.color='{{ render_all_categories('color', $item) }}'">{{render_all_categories('title', $item)}}</a>
                                         </span>
+                                        &nbsp;
                                     @endforeach
                                 @endforeach
                             </div>
@@ -184,7 +185,7 @@ blog-post
                                 <div class="col-md-5">
                                     <div class="card-image">
                                         <img class="img img-raised rounded"
-                                            src="{{asset('images/posts/'. $value->background_image)}}">
+                                            src="{{ $value->media_url('card') }}">
                                     </div>
                                 </div>
                                 <div class="col-md-7">
@@ -205,7 +206,7 @@ blog-post
                                         @if ($value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'} == null)
                                             {{ __('frontend.no_language_detect') }}
                                         @else
-                                            {{ split_sentence($value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'}, 170, '...') }}
+                                            {!! split_sentence( strip_tags($value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'}) , 170, '...') !!}
                                         @endif
                                     </p>
                                     <p class="author">
@@ -234,7 +235,7 @@ blog-post
                                         @if ($value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'} == null)
                                             {{ __('frontend.no_language_detect') }}
                                         @else
-                                            {{ split_sentence($value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'}, 170, '...') }}
+                                            {!! split_sentence($value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'}, 170, '...') !!}
                                         @endif
                                     </p>
                                     <p class="author">

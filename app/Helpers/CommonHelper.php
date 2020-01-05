@@ -132,6 +132,9 @@ if (!function_exists('render_dashboard_breadcrumb')) {
             if (count($url) < 3) {
                 return "<a href='".route('dashboard.index')."' style='text-decoration:none;'>".__('backend.dashboard')."</a>&nbsp;/&nbsp;".ucfirst($url[1])."";
             } else {
+                if (strtolower($url[2]) != 'create') {
+                    return "<a href='".route('dashboard.index')."' style='text-decoration:none;'>".__('backend.dashboard')."</a>&nbsp;/&nbsp;<a href='".route(Str::plural(strtolower($url[1])).'.index')."' style='text-decoration:none;'>".Str::singular(ucfirst($url[1]))."</a>&nbsp;/&nbsp;".ucfirst($url[3])."&nbsp;".Str::singular(ucfirst($url[1]))."";
+                }
                 return "<a href='".route('dashboard.index')."' style='text-decoration:none;'>".__('backend.dashboard')."</a>&nbsp;/&nbsp;<a href='".route(Str::plural(strtolower($url[1])).'.index')."' style='text-decoration:none;'>".Str::singular(ucfirst($url[1]))."</a>&nbsp;/&nbsp;".ucfirst($url[2])."&nbsp;New&nbsp;".Str::singular(ucfirst($url[1]))."";
             }
         }

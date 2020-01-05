@@ -2,7 +2,7 @@
 
 use Illuminate\Database\Seeder;
 
-use App\Modules\Backend\DeveloperSettings\Models\Developer;
+use App\Modules\Backend\Settings\Models\Developer;
 
 class DeveloperSettingsTableSeeder extends Seeder
 {

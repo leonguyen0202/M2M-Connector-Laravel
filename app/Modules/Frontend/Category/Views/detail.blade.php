@@ -13,7 +13,7 @@ blog-post
 @section('content')
 <div class="page-header page-header-small">
     <div class="page-header-image" data-parallax="true"
-        style="background-image: url({{url(asset('images/categories/'. $category->background_image))}});">
+        style="background-image: url({{ url(asset('images/categories/'. $category->background_image)) }});">
     </div>
     <div class="content-center">
         <div class="row">
@@ -64,16 +64,16 @@ blog-post
                 @foreach ($top_posts as $top)
                 <div class="col-md-6">
                     <div class="card card-background"
-                        style="background-image: url( {{url(asset('images/posts/'.$top->background_image))}} )">
+                        style="background-image: url( {{ $top->media_url('card') }} )">
                         <div class="card-body">
                             <div class="card-title text-left">
                                 @if ($top->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} != null)
                                     <a href="{{route('blog.detail', $top->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} )}}" style="color:white">
-                                        <h3>{{ split_sentence($top->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'}, 30, '...') }}</h3>
+                                        <h3 style="color:white;">{{ split_sentence($top->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'}, 30, '...') }}</h3>
                                     </a>
                                 @else
                                     <a href="{{route('blog.detail', $top->{Config::get('app.fallback_locale').'_slug' })}}" style="color:white">
-                                        <h3>{{ split_sentence($top->{Config::get('app.fallback_locale').'_title' }, 30, '...') }}</h3>
+                                        <h3 style="color:white;">{{ split_sentence($top->{Config::get('app.fallback_locale').'_title' }, 30, '...') }}</h3>
                                     </a>
                                 @endif
                             </div>
@@ -123,12 +123,12 @@ blog-post
                             <div class="card-image">
                                 @if ($post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} != null)
                                     <a href="{{route('blog.detail', $post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} )}}">
-                                        <img class="img rounded" src="{{asset('images/posts/'. $post->background_image)}}"
+                                        <img class="img rounded" src="{{ $post->media_url('card') }}"
                                             alt="{{$post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'} }}">
                                     </a>
                                 @else
                                     <a href="{{route('blog.detail', $post->{Config::get('app.fallback_locale').'_slug' } )}}">
-                                        <img class="img rounded" src="{{asset('images/posts/'. $post->background_image)}}"
+                                        <img class="img rounded" src="{{ $post->media_url('card') }}"
                                             alt="{{$post->{Config::get('app.fallback_locale').'_title' } }}">
                                     </a>
                                 @endif
@@ -147,7 +147,7 @@ blog-post
                                     @if ($post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'} == null)
                                         {{ __('frontend.no_language_detect') }}
                                     @else
-                                        {{ split_sentence($post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'}, 40, '...') }}
+                                        {{ split_sentence( strip_tags($post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'}) , 40, '...') }}
                                     @endif
                                 </p>
                                 <div class="card-footer">

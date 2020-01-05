@@ -22,7 +22,7 @@
 
                 @if ($item instanceof \App\Modules\Backend\Blogs\Models\Blog)
                 <div class="page-header-image"
-                    style="background-image: url({{ url(asset('images/posts/'.$item->background_image)) }});">
+                    style="background-image: url({{ $value->media_url('slider') }});">
                 </div>
                 @elseif($item instanceof \App\Modules\Backend\Events\Models\Event)
                 <div class="page-header-image"
@@ -37,18 +37,17 @@
                                 <div class="col-md-8 ml-auto mr-auto text-center">
                                     <h1 class="title">
                                         @if ($item->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'} != null)
-                                            {{ $item->{ Cookie::get(strtolower(env('APP_NAME')).'_language').'_title'} }}
+                                            {{ split_sentence($item->{ Cookie::get(strtolower(env('APP_NAME')).'_language').'_title'} ,50 ,'...') }}
                                         @else
                                             {{ $item->{Config::get('app.fallback_locale').'_title'} }}
                                         @endif
                                     </h1>
                                     <h4 class="description ">
                                         @if ($item->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'} != null)
-                                            {{split_sentence($item->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'}, 191, '...')}}
+                                            {!! split_sentence( strip_tags($item->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'}) , 150, '...') !!}
                                         @else
                                             {{ __('frontend.no_language_detect') }}
                                         @endif
-                                        
                                     </h4>
                                     <br />
                                     <div class="buttons">
@@ -160,16 +159,16 @@ sections-page
             @foreach ($top_posts as $top)
             <div class="col-md-6">
                 <div class="card card-background"
-                    style="background-image: url( {{url(asset('images/posts/'.$top->background_image))}} )">
+                    style="background-image: url( {{ $value->media_url('card') }} )">
                     <div class="card-body">
-                        <div class="card-title text-left">
+                        <div class="card-title text-left title">
                             @if ($top->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} != null)
-                                <a href="{{route('blog.detail', $top->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'}) }}" style="color:white">
-                                    <h3>{{ split_sentence($top->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'}, 35, '...') }}</h3>
+                                <a href="{{route('blog.detail', $top->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'}) }}">
+                                    <h3 style="color:white;">{{ split_sentence($top->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'}, 35, '...') }}</h3>
                                 </a>
                             @else
-                                <a href="{{route('blog.detail', $top->{Config::get('app.fallback_locale').'_slug'} ) }}" style="color:white">
-                                    <h3>{{ split_sentence($top->{Config::get('app.fallback_locale').'_title'}, 35, '...') }}</h3>
+                                <a href="{{route('blog.detail', $top->{Config::get('app.fallback_locale').'_slug'} ) }}">
+                                    <h3 style="color:white;">{{ split_sentence($top->{Config::get('app.fallback_locale').'_title'}, 35, '...') }}</h3>
                                 </a>
                             @endif
                         </div>
@@ -180,7 +179,7 @@ sections-page
                                         alt="{{$top->author->avatar}}" class="avatar img-raised">
                                     <span>{{ $top->author->name }}</span>
                                 </div>
-
+                                &nbsp;
                                 <div class="stats stats-right justify-content-center">
                                     &#9;&#9;&#9;
                                     <i class="now-ui-icons tech_watch-time"></i>
@@ -225,12 +224,12 @@ sections-page
                             <div class="card-image">
                                 @if ($post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} != null)
                                     <a href="{{route('blog.detail', $post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'})}}">
-                                        <img class="img rounded" src="{{asset('images/posts/'. $post->background_image)}}"
+                                        <img class="img rounded" src="{{ $post->media_url('card') }}"
                                             alt="{{ $post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} }}">
                                     </a>
                                 @else
                                     <a href="{{route('blog.detail', $post->{Config::get('app.fallback_locale').'_slug'})}}">
-                                        <img class="img rounded" src="{{asset('images/posts/'. $post->background_image)}}"
+                                        <img class="img rounded" src="{{ $post->media_url('card') }}"
                                             alt="{{ $post->{Config::get('app.fallback_locale').'_slug'} }}">
                                     </a>
                                 @endif
@@ -247,7 +246,7 @@ sections-page
                                 </h5>
                                 <p class="card-description">
                                         @if ($post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'} != null)
-                                        {{ split_sentence($post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'}, 40, '...') }}
+                                        {{ split_sentence( strip_tags($post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'}) , 40, '...') }}
                                     @else
                                         {{ __('frontend.no_language_detect') }}
                                     @endif

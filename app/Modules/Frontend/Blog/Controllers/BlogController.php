@@ -11,9 +11,9 @@ use App\Traits\BotmanTraits;
 use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Arr;
 // use JavaScript;
 
 use Illuminate\Support\Facades\DB;
@@ -86,6 +86,8 @@ class BlogController extends Controller
             return redirect()->route('home.index');
         }
 
+        // $explode = preg_split('/[-\s\s,;:<>\/_"?%&]+/', $blog->en_description);
+
         $category = Category::find(($blog->categories)['categories_id'][array_rand(($blog->categories)['categories_id'])]);
 
         $similar_stories = Blog::query()->whereJsonContains('categories->categories_id', $category->id)->whereNotIn('id', [$blog->id])->inRandomOrder()->limit(2)->get();
@@ -94,7 +96,7 @@ class BlogController extends Controller
 
         if (Auth::user()) {
             $subscriber = Subscribe::query()->where([
-                ['email', '=', Auth::user()->email]
+                ['email', '=', Auth::user()->email],
             ])->first();
 
             if ($subscriber != null) {

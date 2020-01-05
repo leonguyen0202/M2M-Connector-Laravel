@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Modules\Backend\Blogs\Models\Blog;
-use App\Modules\Backend\DeveloperSettings\Models\Developer;
+use App\Modules\Backend\Settings\Models\Developer;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

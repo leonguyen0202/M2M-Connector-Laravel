@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Backend\DeveloperSettings\Models;
+namespace App\Modules\Backend\Settings\Models;
 
 // use App\Traits\CleanUpProjectTrait;
 use Cviebrock\EloquentSluggable\Sluggable;

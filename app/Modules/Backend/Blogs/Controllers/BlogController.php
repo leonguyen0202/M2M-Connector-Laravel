@@ -7,7 +7,7 @@ use App\Jobs\BlogCRUDJob;
 use App\Modules\Backend\Blogs\Models\Blog;
 use App\Modules\Backend\Blogs\Requests\BlogCreateFormRequest;
 use App\Modules\Backend\Categories\Models\Category;
-use App\Modules\Backend\DeveloperSettings\Models\Developer;
+use App\Modules\Backend\Settings\Models\Developer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,9 +20,8 @@ use Illuminate\Support\Facades\Request as FacadeRequest;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Storage;
+use Illuminate\Support\Facades\Storage;
 // use Illuminate\Http\File;
-// use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\DataTables;
 
 // use JavaScript;
@@ -40,21 +39,27 @@ class BlogController extends Controller
         $this->middleware('auth');
         $this->is_table_view = true;
         $this->posts = null;
+        $this->edit_mode = false;
         $this->config_locale = Config::get('app.fallback_locale');
         $this->upload_path = Developer::query()->where([['type', '=', 'upload']])->first();
     }
 
+    /**
+     * Rendering dataTable for table view
+     * 
+     * @return \Yajra\DataTables\DataTables
+     */
     public function table()
     {
         if (!FacadeRequest::isMethod('POST')) {
             return response()->json(['error' => __('form.not_support_method')]);
         }
 
-        // if (Cache::has('_' . Auth::id() . '_blog_data')) {
-        //     $posts = Cache::get('_' . Auth::id() . '_blog_data');
-        // } else {
+        if (Cache::has('_' . Auth::id() . '_blog_data')) {
+            $posts = Cache::get('_' . Auth::id() . '_blog_data');
+        } else {
             $posts = Auth::user()->has_blogs;
-        // }
+        }
 
         return DataTables::of($posts)
             ->addColumn('title', function (Blog $post) {
@@ -89,7 +94,7 @@ class BlogController extends Controller
                                 <i class='now-ui-icons ui-1_zoom-bold'></i>
                             </a>
                             &nbsp;
-                            <a href='#' class='btn btn-primary btn-fab btn-icon btn-round blog-edit'
+                            <a href='".route('blogs.edit', $slug)."' class='btn btn-primary btn-fab btn-icon btn-round blog-edit'
                                 data-toggle='tooltip' data-placement='top' title='Edit Post'>
                                 <i class='now-ui-icons ui-2_settings-90'></i>
                             </a>
@@ -116,6 +121,12 @@ class BlogController extends Controller
             ->make(true);
     }
 
+    /**
+     * Caching view for blog index
+     * 
+     * @param string $view
+     * @return \Illuminate\Http\Response
+     */
     public function switchView($view)
     {
         Session::put('blogview', $view);
@@ -129,6 +140,11 @@ class BlogController extends Controller
         return redirect()->back();
     }
 
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function index()
     {
         // Cache::forget('_' . Auth::id() . '_blog_data');
@@ -151,11 +167,11 @@ class BlogController extends Controller
             }
         }
 
-        // if (Cache::has('_' . Auth::id() . '_blog_data')) {
-        //     $this->posts = Cache::get('_' . Auth::id() . '_blog_data');
-        // } else {
+        if (Cache::has('_' . Auth::id() . '_blog_data')) {
+            $this->posts = Cache::get('_' . Auth::id() . '_blog_data');
+        } else {
             $this->posts = Auth::user()->has_blogs;
-        // }
+        }
 
         return view('Blogs::index')->with([
             'is_table_view' => $this->is_table_view,
@@ -163,10 +179,15 @@ class BlogController extends Controller
         ]);
     }
 
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function create()
     {
         $view = array();
-
+        
         $languages = DB::table('localization')->select('locale_code', 'locale_name')->get();
 
         $categories = Category::all();
@@ -175,13 +196,19 @@ class BlogController extends Controller
             array_push($view, strtolower($value->locale_name));
         }
 
-        return view('Blogs::create')->with([
+        return view('Blogs::mode')->with([
             'languages' => $languages,
             'categories' => $categories,
-            'view' => array_reverse($view),
+            'edit_mode' => $this->edit_mode
         ]);
     }
 
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function store(Request $request)
     {
         
@@ -280,25 +307,80 @@ class BlogController extends Controller
         return redirect()->route('blogs.index')->with('success', ['Blog created successfully']);
     }
 
-    public function delete(Request $request)
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  string  $slug
+     * @return \Illuminate\Http\Response
+     */
+    public function edit($slug)
+    {
+        $post = Blog::query()->where([
+            [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'), '=', $slug],
+        ])->first();
+
+        if ($post == null) {
+            $post = Blog::query()->where([
+                [(Config::get('app.fallback_locale') . '_slug'), '=', $slug],
+            ])->first();
+        }
+
+        if ($post == null || $post->author_id != Auth::id()) {
+            return redirect()->route('blogs.index')->with('error', ['Data is not existed']);
+        }
+
+        $languages = DB::table('localization')->select('locale_code', 'locale_name')->get();
+
+        $categories = Category::all();
+
+        $this->edit_mode = true;
+
+        return view('Blogs::mode')->with([
+            'post' => $post,
+            'languages' => $languages,
+            'categories' => $categories,
+            'edit_mode' => $this->edit_mode
+        ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  string  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $slug)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  string  $slug
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($slug)
     {
         if (!FacadeRequest::isMethod("DELETE")) {
             return response()->json(['error' => __('form.not_support_method')]);
         }
 
         $post = Blog::query()->where([
-            [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'), '=', $request->slug],
+            [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'), '=', $slug],
         ])->first();
 
         if ($post == null) {
             $post = Blog::query()->where([
-                [(Config::get('app.fallback_locale') . '_slug'), '=', $request->slug],
+                [(Config::get('app.fallback_locale') . '_slug'), '=', $slug],
             ])->first();
         }
 
         if ($post == null || $post->author_id != Auth::id()) {
             return response()->json(['error' => 'Data is not exist']);
         }
+
         try {
             $post->getMedia('blog-images');
         } catch (\Throwable $th) {

@@ -18,10 +18,9 @@ $(document).on('click', '.blog-delete', function (e) {
     }).then((result) => {
         if (result.value) {
             $.ajax({
-                url: '/dashboard/blog/delete',
+                url: '/dashboard/blogs/'+slug,
                 method: "DELETE",
                 data: {
-                    slug: slug,
                     '_token': $('input[name=_token]').val()
                 },
                 beforeSend: () => {

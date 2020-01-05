@@ -40,15 +40,21 @@
                         <i class="now-ui-icons ui-1_zoom-bold"></i>
                     </button>
                     &nbsp;
-                    <button type="button" class="btn btn-primary btn-fab btn-icon btn-round blog-edit"
-                        data-toggle="tooltip" data-placement="top" title="Edit Post">
-                        <i class="now-ui-icons ui-2_settings-90"></i>
-                    </button>
+                    <?php 
+                        if ($post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} != null) {
+                            $slug = $post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'};
+                        } else {
+                            $slug = $post->{Config::get('app.fallback_locale').'_slug' };
+                        }
+                        echo "<a href='".route('blogs.edit', $slug)."' class='btn btn-primary btn-fab btn-icon btn-round blog-edit' data-toggle='tooltip' data-placement='top' title='Edit Post'>
+                                    <i class='now-ui-icons ui-2_settings-90'></i>
+                                </a>";
+                    ?>
                     &nbsp;
-                    <button type="button" class="btn btn-danger btn-fab btn-icon btn-round blog-delete"
+                    <a href="#" class="btn btn-danger btn-fab btn-icon btn-round blog-delete"
                         data-toggle="tooltip" data-placement="top" title="Delete Post">
                         <i class="now-ui-icons ui-1_simple-remove"></i>
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>

@@ -2,7 +2,7 @@
 
 namespace App\Modules\Backend\Spatie\Models;
 
-use App\Modules\Backend\DeveloperSettings\Models\Developer;
+use App\Modules\Backend\Settings\Models\Developer;
 use Spatie\MediaLibrary\Models\Media;
 use Spatie\MediaLibrary\PathGenerator\PathGenerator as BaseGenerator;
 
