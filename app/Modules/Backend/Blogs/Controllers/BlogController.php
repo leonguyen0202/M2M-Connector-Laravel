@@ -78,7 +78,7 @@ class BlogController extends Controller
             ->addColumn('comments', function ($post) {
                 return '<span class="badge badge-warning">0</span>';
             })
-            ->editColumn('action', function (Blog $post) {
+            ->editColumn('action', function ($post) {
                 if ($post->{Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'} != null) {
                     $slug = $post->{Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'};
                 } else {
@@ -107,17 +107,22 @@ class BlogController extends Controller
                             </a>
                         </div>";
             })
-            ->editColumn('background', function (Blog $post) {
+            ->editColumn('background', function ($post) {
                 if ($post->{Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'} != null) {
                     $slug = $post->{Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'};
                 } else {
                     $slug = $post->{Config::get('app.fallback_locale') . '_slug'};
                 }
-                if (!file_exists($post->media_url('thumb'))) {
-                    return "<img src='" . $post->getFirstMediaUrl('blog-images') . "' alt='" . $slug . "' style='width:50px;height:33px'>";
-                }
 
-                return "<img src='" . $post->media_url('thumb') . "' alt='" . $slug . "'>";
+                if ($post instanceof \App\Modules\Backend\Blogs\Models\Blog) {
+                    if (!file_exists($post->media_url('thumb'))) {
+                        return "<img src='" . $post->getFirstMediaUrl('blog-images') . "' alt='" . $slug . "' style='width:50px;height:33px'>";
+                    }
+    
+                    return "<img src='" . $post->media_url('thumb') . "' alt='" . $slug . "'>";
+                }
+                return "<img src='".asset('storage/images/upload/'. $post->background_image)."' alt='".$slug."' style='width:50px;height:33px'>";
+                
             })
             ->rawColumns(['background', 'categories', 'comments', 'action'])
             ->make(true);
@@ -148,11 +153,12 @@ class BlogController extends Controller
      * @param string $view
      * @return \Illuminate\Http\Response
      */
-    public function ajax_tinyMCE_description($slug)
+    public function ajax_tinyMCE_description(Request $request)
     {
         if (!FacadeRequest::isMethod("POST")) {
             return response()->json(['error' => __('form.not_support_method')]);
         }
+        $slug = $request->slug;
 
         $selectable_description = array();
 
@@ -160,19 +166,19 @@ class BlogController extends Controller
             array_push($selectable_description, $value->locale_code . '_description');
         }
 
-        array_push($selectable_description, 'author_id');
-
-        $post = Blog::query()->where([
+        $result = Blog::query()->where([
+            ['author_id', '=', Auth::id()]
+        ])->where([
             [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'), '=', $slug],
         ])->orWhere([
             [(Config::get('app.fallback_locale') . '_slug'), '=', $slug],
         ])->select($selectable_description)->first();
 
-        if ($post == null || $post->author_id != Auth::id()) {
+        if ($result == null) {
             return response()->json(['error' => 'Data is not exist']);
         }
 
-        return response()->json(['data' => $post]);
+        return response()->json(['data' => $result]);
     }
 
     /**
@@ -186,13 +192,13 @@ class BlogController extends Controller
 
         // $collection = collect([]);
 
-        $posts = Auth::user()->has_blogs;
+        // $posts = Auth::user()->has_blogs;
 
         // foreach ($posts as $key => $value) {
         //     $collection->push($value);
         // }
 
-        Cache::store('database')->put('_' . Auth::id() . '_blog_data', $posts, Config::get('cache.lifetime'));
+        // Cache::store('database')->put('_' . Auth::id() . '_blog_data', $posts, Config::get('cache.lifetime'));
 
         if (Cache::has('_' . Auth::id() . '_blog_view')) {
             $blog_view = Cache::get('_' . Auth::id() . '_blog_view');
@@ -238,7 +244,6 @@ class BlogController extends Controller
      */
     public function store(Request $request)
     {
-
         if (FacadeRequest::ajax() or !$request->isMethod('post')) {
             return Redirect::back()->with('errors', [__('form.not_support_method')]);
         }
@@ -310,7 +315,7 @@ class BlogController extends Controller
 
             // $item->add_media_from_disk($name, $fileName);
 
-            $item->addMedia($files)->usingName($name)->usingFileName($item->background_image)->toMediaCollection('blog-images');
+            $blog->addMedia($files)->usingName($name)->usingFileName($blog->background_image)->toMediaCollection('blog-images');
 
             // $item->addMediaFromDisk($item->background_image, 'upload')->usingName($name)->usingFileName($item->background_image)->toMediaCollection('blog-images');
         }
@@ -327,9 +332,28 @@ class BlogController extends Controller
             $cache_collection->push($value);
         }
 
-        Cache::store('database')->put('_' . Auth::id() . '_blog_data', $posts, Config::get('cache.lifetime'));
+        $cache_collection->push(
+            (object) $array_object
+        );
+
+        Cache::store('database')->put('_' . Auth::id() . '_blog_data', $cache_collection, Config::get('cache.lifetime'));
 
         return redirect()->route('blogs.index')->with('success', ['Blog created successfully']);
+
+        $job = (new BlogCreateJob($name, $fileName, $array_object))->delay(Carbon::now()->addSeconds(10));
+
+        dispatch($job);
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  string  $slug
+     * @return \Illuminate\Http\Response
+     */
+    public function show($slug)
+    {
+        //
     }
 
     /**
@@ -372,6 +396,9 @@ class BlogController extends Controller
      */
     public function update(Request $request, $slug)
     {
+        echo $slug. "<br/>";
+
+        return $request->all();
         //
     }
 
@@ -388,12 +415,15 @@ class BlogController extends Controller
         }
 
         $post = Blog::query()->where([
+            ['author_id', '=', Auth::id()]
+        ])
+        ->where([
             [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'), '=', $slug],
         ])->orWhere([
             [(Config::get('app.fallback_locale') . '_slug'), '=', $slug],
         ])->first();
 
-        if ($post == null || $post->author_id != Auth::id()) {
+        if ($post == null) {
             return response()->json(['error' => 'Data is not exist']);
         }
 
@@ -411,15 +441,9 @@ class BlogController extends Controller
 
         Cache::forget('_' . Auth::id() . '_blog_data');
 
-        $auth_blogs = Auth::user()->has_blogs;
+        $blogs = Auth::user()->has_blogs;
 
-        $posts = collect([]);
-
-        foreach ($auth_blogs as $key => $value) {
-            $posts->push($value);
-        }
-
-        Cache::store()->put('_' . Auth::id() . '_blog_data', $posts, Config::get('cache.lifetime'));
+        Cache::store()->put('_' . Auth::id() . '_blog_data', $blogs, Config::get('cache.lifetime'));
 
         return response()->json(['success' => 'Data is deleted successfully!']);
     }

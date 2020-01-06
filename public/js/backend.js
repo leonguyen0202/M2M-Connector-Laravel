@@ -1,7 +1,3 @@
-$(document).ready(function () {
-
-});
-
 $(document).on('click', '.blog-comments', function (e) {
     e.preventDefault();
     Swal.fire({
@@ -25,7 +21,7 @@ $(document).on('click', '.blog-view', function (e) {
 
 $(document).on('click', '.blog-delete', function (e) {
     e.preventDefault();
-    
+
     var slug = $(this).data('slug');
 
     Swal.fire({
@@ -39,7 +35,7 @@ $(document).on('click', '.blog-delete', function (e) {
     }).then((result) => {
         if (result.value) {
             $.ajax({
-                url: '/dashboard/blogs/'+slug,
+                url: '/dashboard/blogs/' + slug,
                 method: "DELETE",
                 data: {
                     '_token': $('input[name=_token]').val()
@@ -58,7 +54,7 @@ $(document).on('click', '.blog-delete', function (e) {
                     Swal.disableLoading();
 
                     Swal.close();
-                    
+
                     if (data.error) {
                         Swal.fire({
                             type: 'error',

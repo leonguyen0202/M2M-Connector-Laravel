@@ -16,7 +16,7 @@
     @stack('customCSS')
 </head>
 
-<body class="sidebar-mini">
+<body class="sidebar-mini" {!! render_conditional_class( isset($edit_mode) , render_conditional_class( isset($edit_mode),'onload="getDescription();"','') , '' ) !!}>
     <div class="wrapper ">
         @include('backend._partials._sidebar')
         <div class="main-panel" id="main-panel">
@@ -28,54 +28,56 @@
         </div>
     </div>
     @include('backend._partials._javascript')
+    
     @stack('customJS')
+
     @if (session('errors'))
     @foreach (session('errors') as $error)
     <script type="text/javascript">
         $.notify({
-                icon: "now-ui-icons ui-1_simple-remove",
-                message: "{!! $error !!}",
+            icon: "now-ui-icons ui-1_simple-remove",
+            message: "{!! $error !!}",
 
-            }, {
-                type: 'danger',
-                timer: 5000,
-                allow_dismiss: false,
-                placement: {
-                    from: 'top',
-                    align: 'right',
-                },
-                animate: {
-                    enter: 'animated fadeInDown',
-                    exit: 'animated fadeOutUp'
-                },
-            });
+        }, {
+            type: 'danger',
+            timer: 5000,
+            allow_dismiss: false,
+            placement: {
+                from: 'top',
+                align: 'right',
+            },
+            animate: {
+                enter: 'animated fadeInDown',
+                exit: 'animated fadeOutUp'
+            },
+        });
     </script>
     @endforeach
     @endif
 
     @if (session('success'))
     @foreach (session('success') as $success)
-        <script type="text/javascript">
-            $.notify({
-                icon: "now-ui-icons ui-1_check",
-                message: "{!! $success !!}",
+    <script type="text/javascript">
+        $.notify({
+            icon: "now-ui-icons ui-1_check",
+            message: "{!! $success !!}",
 
-            }, {
-                type: 'success',
-                timer: 3000,
-                allow_dismiss: false,
-                placement: {
-                    from: 'top',
-                    align: 'right',
-                },
-                animate: {
-                    enter: 'animated fadeInDown',
-                    exit: 'animated fadeOutUp'
-                },
-            });
-        </script>
+        }, {
+            type: 'success',
+            timer: 3000,
+            allow_dismiss: false,
+            placement: {
+                from: 'top',
+                align: 'right',
+            },
+            animate: {
+                enter: 'animated fadeInDown',
+                exit: 'animated fadeOutUp'
+            },
+        });
+    </script>
     @endforeach
-@endif
+    @endif
 </body>
 
 </html>

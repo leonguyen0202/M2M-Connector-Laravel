@@ -15,15 +15,15 @@
 <div class="panel-header" style="height:320px;">
     <div class="header text-center">
         @if ($edit_mode)
-            <h2 class="title">Edit Blog</h2>
-            <p class="category">
-                Image and categories will be kept the same if there is no new change<br>
-            </p>
+        <h2 class="title">Edit Blog</h2>
+        <p class="category">
+            Image and categories will be kept the same if there is no new change<br>
+        </p>
         @else
-            <h2 class="title">New Blog</h2>
-            <p class="category">
-                This section will let you create new blog<br>
-            </p>
+        <h2 class="title">New Blog</h2>
+        <p class="category">
+            This section will let you create new blog<br>
+        </p>
         @endif
         <br>
         <button type="button" class="btn btn-success btn-round" id="blog-submit">
@@ -44,9 +44,13 @@
             <div class="card">
                 <div class="card-body">
                     <div id="accordion" role="tablist" aria-multiselectable="true" class="card-collapse">
-                        <form action="{{ ($edit_mode) ? route('blogs.update', $slug) : route('blogs.store') }}" class="blog-form" id="blog-form"
-                            enctype="multipart/form-data" method="POST">
+                        <form action="{{ ($edit_mode) ? route('blogs.update', $slug) : route('blogs.store') }}"
+                            class="blog-form" id="blog-form" enctype="multipart/form-data" method="POST">
                             @csrf
+                            @if ($edit_mode)
+                            @method('PUT')
+                            <input type="hidden" name="_slug" id="slug" class="slug" value="{{$slug}}">
+                            @endif
                             @foreach ($languages as $key => $section)
                             <div class="card card-plain">
                                 <div class="card-header" role="tab" id="{{$section->locale_name}}">
@@ -73,10 +77,10 @@
                                     <div class="card-body">
                                         @if ($section->locale_code == Config::get('app.fallback_locale'))
                                         <div class="form-group tags-parent">
-                                            <input type="text" name="tags" {!! ($edit_mode)
-                                                ? " value=' " . form_tags($post->categories) . " ' "
-                                                : " value='' " !!} class="tagsinput form-control tags"
-                                                data-role="tagsinput" data-color="info" disabled>
+                                            <input type="text" name="tags" {!! ($edit_mode) ? " value=' " .
+                                                form_tags($post->categories) . " ' "
+                                            : " value='' " !!} class="tagsinput form-control tags"
+                                            data-role="tagsinput" data-color="info" disabled>
                                         </div>
                                         @endif
                                         <div class="form-group">
@@ -152,7 +156,7 @@
             <div class="modal-body">
                 <div class="row text-center">
                     <div class="col">
-                        <img src="{{$post->media_url('slider')}}" alt="{{$post->en_title}}">
+                        <img src="{{ $post->media_url('slider') }}" alt="original-image">
                     </div>
                 </div>
             </div>
@@ -168,13 +172,6 @@
 @push('customJS')
 <script src="{{ asset('js/tinymce/js/tinymce/tinymce.min.js') }}"></script>
 
-
-
-@if ($edit_mode)
-<script type="text/javascript">
-
-</script>
-@endif
 <script type="text/javascript">
     $(document).ready(function () {
         $('#blog-submit').on('click', function (e) {
@@ -194,7 +191,42 @@
         @endforeach
     })
 </script>
-{{-- @endif --}}
+
+@if ($edit_mode)
+<script type="text/javascript">
+    function getDescription() {
+        var slug = $('input[name=_slug]').val();
+        $.ajax({
+            url: '/dashboard/blog/tinymce/description',
+            method: "POST",
+            dataType: 'json',
+            data: {
+                slug:slug,
+                '_token': $('input[name=_token]').val(),
+            },
+            success: (data) => {
+                if (data.error) {
+                    Swal.fire({
+                        type: 'error',
+                        title: data.error,
+                        showConfirmButton: false,
+                        timer: 1000,
+                    });
+                } else {
+                    $.each(data.data, function (k,v) {
+                        if (v != null) {
+                            tinymce.get(k).setContent(v);   
+                        }
+                    });
+                };
+            },
+            error: (jqXHR, textStatus, errorThrown) => {
+                formatErrorMessage(jqXHR, errorThrown)
+            },
+        });
+    };
+</script>
+@endif
 
 
 

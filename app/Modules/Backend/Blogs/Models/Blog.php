@@ -12,6 +12,10 @@ use Spatie\MediaLibrary\HasMedia\HasMedia;
 use Spatie\MediaLibrary\HasMedia\HasMediaTrait;
 use Webpatser\Uuid\Uuid;
 use Spatie\MediaLibrary\Models\Media;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Cookie;
 
 class Blog extends Model implements HasMedia
 {
@@ -97,6 +101,19 @@ class Blog extends Model implements HasMedia
             do {
                 $model->id = (string) Uuid::generate(4);
             } while ($model->where($model->getKeyName(), $model->id)->first() != null);
+        });
+
+        self::saved(function ($model)
+        {
+            if (Auth::check() && Auth::id() == $model->author_id) {
+                $blogs = Auth::user()->has_blogs;
+
+                if (Cache::has('_'. Auth::id() . '_blog_data')) {
+                    Cache::forget('_'. Auth::id() . '_blog_data');
+                }
+
+                Cache::store('database')->put('_'. Auth::id() . '_blog_data', $blogs, Config::get('cache.lifetime'));
+            }
         });
     }
 
