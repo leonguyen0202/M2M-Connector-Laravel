@@ -4,7 +4,7 @@ namespace App\Modules\Backend\Blogs\Models;
 
 // use App\Traits\CleanUpProjectTrait;
 use App\User;
-use Cviebrock\EloquentSluggable\Sluggable;
+// use Cviebrock\EloquentSluggable\Sluggable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -19,7 +19,9 @@ use Illuminate\Support\Facades\Cookie;
 
 class Blog extends Model implements HasMedia
 {
-    use HasMediaTrait, Sluggable;
+    // use Sluggable;
+
+    use HasMediaTrait;
 
     public $incrementing = false;
 
@@ -136,18 +138,18 @@ class Blog extends Model implements HasMedia
      *
      * @return array
      */
-    public function sluggable()
-    {
-        // $languages = array();
+    // public function sluggable()
+    // {
+    //     $languages = array();
 
-        // $db = DB::table('localization')->get();
+    //     $db = DB::table('localization')->get();
 
-        // for ($i = 0; $i < count($db); $i++) {
-        //     $languages[($db[$i])->locale_code . '_slug'] = ['source' => ($db[$i])->locale_code . '_title'];
-        // }
+    //     for ($i = 0; $i < count($db); $i++) {
+    //         $languages[($db[$i])->locale_code . '_slug'] = ['source' => ($db[$i])->locale_code . '_title'];
+    //     }
 
-        return $languages;
-    }
+    //     return $languages;
+    // }
 
     public function getMetaAttribute($value)
     {
