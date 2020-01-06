@@ -1,6 +1,8 @@
 <?php
 use App\Modules\Backend\Categories\Models\Category;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 if (!function_exists('form_json_convert')) {
     function form_json_convert($field, string $json_key)
@@ -57,6 +59,8 @@ if (!function_exists('blog_form_message')) {
 if (!function_exists('blog_data_cache')) {
     function blog_data_cache(array $request, $user_id)
     {
+        $languages = DB::table('localization')->select('locale_name', 'locale_code')->get();
+
         $request_array = $request;
 
         unset($request_array['_token']);
@@ -70,6 +74,10 @@ if (!function_exists('blog_data_cache')) {
         }
 
         $results['author_id'] = $user_id;
+
+        foreach ($languages as $key => $language) {
+            $results[($language->locale_code) . '_slug'] = ($results[($language->locale_code) . '_title'] != null) ? Str::slug($results[($language->locale_code) . '_title'], '-') : null;
+        }
 
         return $results;
     }

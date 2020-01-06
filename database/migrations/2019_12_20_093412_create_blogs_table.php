@@ -18,11 +18,11 @@ class CreateBlogsTable extends Migration
             $table->uuid('id')->primary();
             $table->string('en_title', 255)->unique();
             $table->string('en_slug', 255)->unique();
-            $table->text('en_description');
+            $table->longText('en_description');
 
             $table->string('vi_title', 255)->unique()->nullable();
             $table->string('vi_slug', 255)->unique()->nullable();
-            $table->text('vi_description')->nullable();
+            $table->longText('vi_description')->nullable();
 
             $table->string('background_image');
             

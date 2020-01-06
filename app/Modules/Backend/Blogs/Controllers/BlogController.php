@@ -3,7 +3,7 @@
 namespace App\Modules\Backend\Blogs\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Backend\Blogs\Jobs\BlogCreateJob;
+use App\Modules\Backend\Blogs\Jobs\BlogCRUDJob;
 use App\Modules\Backend\Blogs\Models\Blog;
 use App\Modules\Backend\Blogs\Requests\BlogFormRequestRules;
 use App\Modules\Backend\Categories\Models\Category;
@@ -41,6 +41,9 @@ class BlogController extends Controller
         $this->posts = null;
         $this->data_slug = null;
         $this->edit_mode = false;
+        $this->fileName = 'default-background.jpg';
+        $this->name = str_shuffle(Str::random(60)) . '_' . time();
+        $this->categories = Category::all();
         $this->languages = DB::table('localization')->select('locale_name', 'locale_code')->get();
         $this->config_locale = Config::get('app.fallback_locale');
         $this->upload_path = Developer::query()->where([['type', '=', 'upload']])->first();
@@ -147,6 +150,11 @@ class BlogController extends Controller
         return redirect()->back();
     }
 
+    public function check_duplicate($title)
+    {
+        return response()->json(['status' => 200]);
+    }
+
     /**
      * Getting tinyMCE text area content
      *
@@ -188,8 +196,6 @@ class BlogController extends Controller
      */
     public function index()
     {
-        Cache::store('database')->put('_' . Auth::id() . '_blog_data', Auth::user()->has_blog, Config::get('cache.lifetime'));
-
         if (Cache::has('_' . Auth::id() . '_blog_view')) {
             $blog_view = Cache::get('_' . Auth::id() . '_blog_view');
 
@@ -217,11 +223,9 @@ class BlogController extends Controller
      */
     public function create()
     {
-        $categories = Category::all();
-
         return view('Blogs::mode')->with([
             'languages' => $this->languages,
-            'categories' => $categories,
+            'categories' => $this->categories,
             'edit_mode' => $this->edit_mode,
         ]);
     }
@@ -278,24 +282,16 @@ class BlogController extends Controller
 
             $files = $request->file('background_image_file');
 
-            $name = str_shuffle(Str::random(60)) . '_' . time();
+            $this->fileName = $this->name . '.' . $files->getClientOriginalExtension();
 
-            $fileName = $name . '.' . $files->getClientOriginalExtension();
-
-            Storage::disk('upload')->putFileAs('', $files, $fileName);
-        } else {
-            $fileName = 'default-background.jpg';
+            Storage::disk('upload')->putFileAs('', $files, $this->fileName);
         }
 
         $array_object = blog_data_cache($request->all(), Auth::id());
 
-        $array_object['background_image'] = $fileName;
+        $array_object['background_image'] = $this->fileName;
 
-        foreach ($this->languages as $key => $language) {
-            $array_object[($language->locale_code) . '_slug'] = ($array_object[($language->locale_code) . '_title'] != null) ? Str::slug($array_object[($language->locale_code) . '_title'], '-') : null;
-        }
-
-        $job = (new BlogCreateJob($request->background_image_file, $name, $fileName, $array_object, FacadeRequest::method()))->delay(Carbon::now()->addSeconds(10));
+        $job = (new BlogCRUDJob(null, $array_object, FacadeRequest::method()))->delay(Carbon::now()->addSeconds(10));
 
         dispatch($job);
 
@@ -339,6 +335,18 @@ class BlogController extends Controller
      */
     public function edit($slug)
     {
+        $arr = [
+            'key' => 'value',
+        ];
+
+        if (isset($arr['key2'])) {
+            return "isset";
+        } else {
+            return "no isset";
+        }
+
+        dd($arr);
+
         $post = Blog::query()->where([
             ['author_id', '=', Auth::id()],
         ])
@@ -352,14 +360,12 @@ class BlogController extends Controller
             return redirect()->route('blogs.index')->with('error', [__('form.data_not_exist')]);
         }
 
-        $categories = Category::all();
-
         $this->edit_mode = true;
 
         return view('Blogs::mode')->with([
             'post' => $post,
             'languages' => $this->languages,
-            'categories' => $categories,
+            'categories' => $this->categories,
             'edit_mode' => $this->edit_mode,
             'slug' => $slug,
         ]);
@@ -422,13 +428,16 @@ class BlogController extends Controller
                 ])->first();
 
                 if ($check_blog_title) {
-                    # code... 
                     return Redirect::back()->with('errors', [ __('form.blog_title_unique') ]);
                 }
             }
         }
 
         return "HERE";
+
+        $cache_collection = collect([]);
+
+        $array_object = blog_data_cache($request->all(), Auth::id());
 
         if (isset($request->background_image_file)) {
             Validator::make([$request->background_image_file], [
@@ -445,14 +454,18 @@ class BlogController extends Controller
 
             $files = $request->file('background_image_file');
 
-            $name = str_shuffle(Str::random(60)) . '_' . time();
+            $this->fileName = $this->name . '.' . $files->getClientOriginalExtension();
 
-            $fileName = $name . '.' . $files->getClientOriginalExtension();
+            Storage::disk('upload')->putFileAs('', $files, $this->fileName);
 
-            Storage::disk('upload')->putFileAs('', $files, $fileName);
+            $array_object['background_image'] = $this->fileName;
         }
 
         dd($request->all());
+
+        $job = (new BlogCRUDJob($post->id, $request->all(), FacadeRequest::method()))->delay(Carbon::now()->addSeconds(30));
+
+        dispatch($job);
 
         $cache = Cache::get('_' . Auth::id() . '_blog_data');
 
@@ -464,7 +477,9 @@ class BlogController extends Controller
             }
         }
 
-        $cache->push();
+        $cache->push(
+            (object) $array_object
+        );
 
         if (Cache::has('_' . Auth::id() . '_blog_data')) {
             Cache::forget('_' . Auth::id() . '_blog_data');
@@ -499,24 +514,35 @@ class BlogController extends Controller
             return response()->json(['error' => __('form.data_not_exist')]);
         }
 
-        try {
-            $post->getMedia('blog-images');
-        } catch (\Throwable $th) {
-            return response()->json(['error' => 'No images']);
-        }
-
         if (!($post->getMedia('blog-images'))->isEmpty()) {
             $post->clearMediaCollection('blog-images');
         }
 
         $post->delete();
 
-        Cache::forget('_' . Auth::id() . '_blog_data');
-
-        $blogs = Auth::user()->has_blogs;
-
-        Cache::store()->put('_' . Auth::id() . '_blog_data', $blogs, Config::get('cache.lifetime'));
-
         return response()->json(['success' => 'Data is deleted successfully!']);
+    }
+    
+    protected function remove_cache($array_object)
+    {
+        $cache = Cache::get('_' . Auth::id() . '_blog_data');
+
+        foreach ($this->languages as $key => $value) {
+            foreach ($cache as $index => $item) {
+                if ($item->{$value->locale_code . '_slug'} == $slug) {
+                    $cache->forget($index);
+                }
+            }
+        }
+
+        $cache->push(
+            (object) $array_object
+        );
+
+        if (Cache::has('_' . Auth::id() . '_blog_data')) {
+            Cache::forget('_' . Auth::id() . '_blog_data');
+        }
+
+        Cache::store()->put('_' . Auth::id() . '_blog_data', $cache, Config::get('cache.lifetime'));
     }
 }

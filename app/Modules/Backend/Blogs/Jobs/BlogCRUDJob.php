@@ -8,22 +8,14 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Config;
-use App\User;
 
-class BlogCreateJob implements ShouldQueue
+class BlogCRUDJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $method;
 
-    public $file;
-
-    public $name;
-
-    public $fileName;
+    public $blog_id;
 
     public $array_data;
 
@@ -32,11 +24,9 @@ class BlogCreateJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($file, $name, $fileName, array $array_data, $method)
+    public function __construct($blog_id, array $array_data, $method)
     {
-        $this->files = $file;
-        $this->name = $name;
-        $this->fileName = $fileName;
+        $this->blog_id = $blog_id;
         $this->array_data = $array_data;
         $this->method = $method;
     }
@@ -51,7 +41,7 @@ class BlogCreateJob implements ShouldQueue
         if (strtolower($this->method) == 'post') {
             $blog = Blog::create($this->array_data);
         } else if (strtolower($this->method) == 'put') {
-            # code...
+            $blog = Blog::find($this->blog_id)->update($this->array_data);
         }
     }
 }
