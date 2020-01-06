@@ -90,13 +90,13 @@ class Event extends Model
      */
     public function sluggable()
     {
-        $languages = array();
+        // $languages = array();
         
-        $db = DB::table('localization')->get();
+        // $db = DB::table('localization')->get();
 
-        for ($i=0; $i < count($db) ; $i++) { 
-            $languages[($db[$i])->locale_code.'_slug'] = [ 'source'=>($db[$i])->locale_code.'_title' ];
-        }
+        // for ($i=0; $i < count($db) ; $i++) { 
+        //     $languages[($db[$i])->locale_code.'_slug'] = [ 'source'=>($db[$i])->locale_code.'_title' ];
+        // }
 
         return $languages;
     }

@@ -16,7 +16,7 @@ class BlogCreateJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $files;
+    public $file;
 
     public $name;
 
@@ -29,8 +29,9 @@ class BlogCreateJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($files, $name, $fileName, array $array_data)
+    public function __construct($file, $name, $fileName, array $array_data)
     {
+        $this->files = $file;
         $this->name = $name;
         $this->fileName = $fileName;
         $this->array_data = $array_data;
@@ -43,6 +44,6 @@ class BlogCreateJob implements ShouldQueue
      */
     public function handle()
     {
-        $blog = DB::table('blogs')->insert($this->array_data);
+        // $blog = Blog::create($);
     }
 }
