@@ -240,7 +240,7 @@ class BlogController extends Controller
 
         $form_request = new BlogFormRequestRules();
 
-        $validator = Validator::make($request->all(), $form_request->rules('create',$this->config_locale), blog_form_message($this->config_locale));
+        $validator = Validator::make($request->all(), $form_request->rules('create', $this->config_locale), blog_form_message('create', $this->config_locale));
 
         if ($validator->fails()) {
             return Redirect::back()->with('errors', $validator->errors()->all());
@@ -249,7 +249,7 @@ class BlogController extends Controller
         foreach ($this->languages as $key => $value) {
             if ($value->locale_code != $this->config_locale) {
                 if ($request->{($value->locale_code) . '_title'} != null || $request->{($value->locale_code) . '_description'} != null) {
-                    $validator = Validator::make($request->all(), $form_request->rules($value->locale_code), blog_form_message($value->locale_code));
+                    $validator = Validator::make($request->all(), $form_request->rules('create', $value->locale_code), blog_form_message('create', $value->locale_code));
                 }
             }
         }
@@ -340,11 +340,11 @@ class BlogController extends Controller
     public function edit($slug)
     {
         $post = Blog::query()->where([
-            ['author_id', '=', Auth::id()]
+            ['author_id', '=', Auth::id()],
         ])
-        ->where([
-            [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'), '=', $slug],
-        ])->orWhere([
+            ->where([
+                [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'), '=', $slug],
+            ])->orWhere([
             [(Config::get('app.fallback_locale') . '_slug'), '=', $slug],
         ])->first();
 
@@ -374,44 +374,61 @@ class BlogController extends Controller
      */
     public function update(Request $request, $slug)
     {
-        $cache = Cache::get('_' . Auth::id() . '_blog_data');
-        
-        foreach ($this->languages as $key => $value) {
-            foreach ($cache as $index => $item) {
-                if ($item->{$value->locale_code . '_slug'} == $slug) {
-                    $cache->forget($index);
-                }
-            }
-        }
-
-        if (Cache::has('_' . Auth::id() . '_blog_data')) {
-            Cache::forget('_' . Auth::id() . '_blog_data');
-        }
-
-        Cache::store()->put('_' . Auth::id() . '_blog_data', $cache, Config::get('cache.lifetime'));
-
-        return redirect()->route('blogs.index')->with('success', ['Cache updated successfully']);
-
         if (FacadeRequest::ajax() or !$request->isMethod('put')) {
             return Redirect::back()->with('errors', [__('form.not_support_method')]);
         }
 
         $post = Blog::query()->where([
-            ['author_id', '=', Auth::id()]
+            ['author_id', '=', Auth::id()],
         ])
-        ->where([
-            [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'), '=', $slug],
-        ])->orWhere([
+            ->where([
+                [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'), '=', $slug],
+            ])->orWhere([
             [(Config::get('app.fallback_locale') . '_slug'), '=', $slug],
         ])->first();
 
         if ($post == null) {
-            return Redirect::back()->with('errors', [ __('form.data_not_exist') ]);
+            return Redirect::back()->with('errors', [__('form.data_not_exist')]);
+        }
+
+        $form_request = new BlogFormRequestRules();
+
+        $validator = Validator::make($request->all(), $form_request->rules('update', $this->config_locale), blog_form_message('update', $this->config_locale));
+
+        if ($validator->fails()) {
+            return Redirect::back()->with('errors', $validator->errors()->all());
+        }
+
+        foreach ($this->languages as $key => $value) {
+            if ($value->locale_code != $this->config_locale) {
+                if ($request->{($value->locale_code) . '_title'} != null || $request->{($value->locale_code) . '_description'} != null) {
+                    $validator = Validator::make($request->all(), $form_request->rules('update', $value->locale_code), blog_form_message('update', $value->locale_code));
+                }
+            }
+        }
+
+        if (empty($validator)) {
+            return Redirect::back()->with('errors', [__('form.not_support_language')]);
         }
 
         if ($validator->fails()) {
             return Redirect::back()->with('errors', $validator->errors()->all());
         }
+
+        foreach ($this->languages as $key => $value) {
+            if ($request->{($value->locale_code) . '_title'} != $post->{($value->locale_code) . '_title'}) {
+                $check_blog_title = Blog::query()->where([
+                    [$value->locale_code . '_title', '=', $request->{($value->locale_code) . '_title'}],
+                ])->first();
+
+                if ($check_blog_title) {
+                    # code... 
+                    return Redirect::back()->with('errors', [ __('form.blog_title_unique') ]);
+                }
+            }
+        }
+
+        return "HERE";
 
         if (isset($request->background_image_file)) {
             Validator::make([$request->background_image_file], [
@@ -435,9 +452,27 @@ class BlogController extends Controller
             Storage::disk('upload')->putFileAs('', $files, $fileName);
         }
 
-        dd( $request->all() );
-        
-        return redirect()->route('blogs.index')->with('success', ['Blog updated successfully']);
+        dd($request->all());
+
+        $cache = Cache::get('_' . Auth::id() . '_blog_data');
+
+        foreach ($this->languages as $key => $value) {
+            foreach ($cache as $index => $item) {
+                if ($item->{$value->locale_code . '_slug'} == $slug) {
+                    $cache->forget($index);
+                }
+            }
+        }
+
+        $cache->push();
+
+        if (Cache::has('_' . Auth::id() . '_blog_data')) {
+            Cache::forget('_' . Auth::id() . '_blog_data');
+        }
+
+        Cache::store()->put('_' . Auth::id() . '_blog_data', $cache, Config::get('cache.lifetime'));
+
+        return redirect()->route('blogs.index')->with('success', ['Cache updated successfully']);
     }
 
     /**
@@ -455,8 +490,8 @@ class BlogController extends Controller
         $post = Blog::query()->where([
             ['author_id', '=', Auth::id()],
         ])->where([
-                [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'), '=', $slug],
-            ])->orWhere([
+            [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'), '=', $slug],
+        ])->orWhere([
             [(Config::get('app.fallback_locale') . '_slug'), '=', $slug],
         ])->first();
 

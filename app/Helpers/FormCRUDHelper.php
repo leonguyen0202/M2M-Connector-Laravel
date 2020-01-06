@@ -1,6 +1,6 @@
 <?php
-use Illuminate\Support\Facades\Config;
 use App\Modules\Backend\Categories\Models\Category;
+use Illuminate\Support\Facades\Config;
 
 if (!function_exists('form_json_convert')) {
     function form_json_convert($field, string $json_key)
@@ -33,22 +33,23 @@ if (!function_exists('blog_form_message')) {
      * @param
      * @return
      */
-    function blog_form_message($prefix)
+    function blog_form_message($type, $prefix)
     {
         $messages = [
             $prefix . '_title.min' => __('form.blog_title_min'),
             $prefix . '_title.max' => __('form.blog_title_max'),
             $prefix . '_title.required' => __('form.blog_title_required'),
             $prefix . '_title.string' => __('form.blog_title_string'),
-            $prefix . '_title.unique' => __('form.blog_title_unique'),
 
             $prefix . '_description.required' => __('form.blog_description_required'),
         ];
-
-        if ($prefix == Config::get('app.fallback_locale')) {
-            $messages['categories.required'] = __('form.blog_categories_required');
+        if (strtolower($type) == 'create') {
+            if ($prefix == Config::get('app.fallback_locale')) {
+                $messages[$prefix . '_title.unique'] = __('form.blog_title_unique');
+                $messages['categories.required'] = __('form.blog_categories_required');
+            }
         }
-        
+
         return $messages;
     }
 }

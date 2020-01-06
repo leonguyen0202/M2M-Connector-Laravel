@@ -24,12 +24,15 @@ class BlogFormRequestRules extends FormRequest
      */
     public function rules($type, $prefix)
     {
+        $rules = [
+            $prefix . '_title' => ['required', 'string', 'min:10', 'max:100'],
+            $prefix . '_description' => ['required'],
+        ];
+
         if (strtolower($type) == 'create') {
-            $rules = [
-                $prefix . '_title' => ['required', 'string', 'min:10', 'max:100', 'unique:blogs'],
-                $prefix . '_description' => ['required'],
-            ];
-    
+            
+            array_push($rules[$prefix . '_title'], 'unique:blogs');
+
             if ($prefix == Config::get('app.fallback_locale')) {
     
                 $rules['categories'] = ['required', 'array'];

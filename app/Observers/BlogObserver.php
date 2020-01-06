@@ -68,6 +68,13 @@ class BlogObserver
         if (!($blog->getMedia('blog-images'))->isEmpty()) {
             $blog->clearMediaCollection('blog-images');
         }
+
+        $user = $blog->author;
+
+        if (Cache::has('_'. $user->id . '_blog_data')) {
+            Cache::forget('_'. $user->id . '_blog_data');
+            Cache::store('database')->put('_'. $user->id . '_blog_data', $user->has_blogs, Config::get('cache.lifetime'));
+        }
     }
 
     /**
