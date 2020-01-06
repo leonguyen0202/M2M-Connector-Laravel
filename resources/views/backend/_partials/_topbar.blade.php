@@ -28,6 +28,16 @@
                 </div>
             </form>
             <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="event.preventDefault();
+                            location.reload();" id="refresh-button">
+                        <i class="now-ui-icons loader_refresh"></i>
+                        <p>
+                            <span class="d-lg-none d-md-block">Refresh</span>
+                        </p>
+                    </a>
+                </li>
+                
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" data-toggle="dropdown"
                         aria-haspopup="true" aria-expanded="false">

@@ -2,10 +2,31 @@ $(document).ready(function () {
 
 });
 
-$(document).on('click', '.blog-delete', function (e) {
-    var parentElement = $(this).parent('.parent');
+$(document).on('click', '.blog-comments', function (e) {
+    e.preventDefault();
+    Swal.fire({
+        type: 'success',
+        title: 'Release soon',
+        showConfirmButton: false,
+        timer: 1000
+    });
+});
 
-    var slug = $(parentElement).find('.token').val();
+$(document).on('click', '.blog-view', function (e) {
+    e.preventDefault();
+
+    Swal.fire({
+        type: 'success',
+        title: 'Release soon',
+        showConfirmButton: false,
+        timer: 1000
+    });
+})
+
+$(document).on('click', '.blog-delete', function (e) {
+    e.preventDefault();
+    
+    var slug = $(this).data('slug');
 
     Swal.fire({
         title: 'Are you sure?',
@@ -74,56 +95,3 @@ $(document).on('click', '.blog-delete', function (e) {
         };
     });
 });
-
-function sweetAlertError(message) {
-    Swal.fire({
-        type: 'error',
-        title: message,
-        showConfirmButton: false,
-        timer: 1000
-    })
-};
-
-function formatErrorMessage(jqXHR, exception) {
-    if (jqXHR.status === 0) {
-        return (
-            sweetAlertError('Not connected.\nPlease verify your network connection.')
-        );
-    } else if (jqXHR.status == 404) {
-        return (
-            sweetAlertError('The request not found.')
-        );
-    } else if (jqXHR.status == 401) {
-        Swal.fire({
-            type: 'error',
-            title: 'Sorry!! You session has expired. Please login to continue access.',
-            showConfirmButton: false,
-            timer: 1500
-        })
-        return (
-            window.setTimeout(() => {
-                location.reload();
-            }, 1000)
-        );
-    } else if (jqXHR.status == 500) {
-        return (
-            sweetAlertError('Internal Server Error.')
-        );
-    } else if (exception === 'parsererror') {
-        return (
-            sweetAlertError('Requested JSON parse failed.')
-        );
-    } else if (exception === 'timeout') {
-        return (
-            sweetAlertError('Time out error.')
-        );
-    } else if (exception === 'abort') {
-        return (
-            sweetAlertError('Ajax request aborted.')
-        );
-    } else {
-        return (
-            sweetAlertError('Unknown error occured. Please try again.')
-        );
-    };
-};

@@ -19,9 +19,19 @@ Route::group(
             'uses' => 'BlogController@switchView'
         ]);
 
+        Route::get('/blog/create', [
+            'as' => 'blogs.create',
+            'uses' => 'BlogController@create'
+        ]);
+
+        Route::get('/blog/edit/{slug}', [
+            'as' => 'blogs.edit',
+            'uses' => 'BlogController@edit'
+        ]);
+
         Route::resource('blogs', 'BlogController')->parameters([
             'blogs' => 'slug'
-        ]);
+        ])->except(['create','edit']);
 
         // Route::get('/blogs', [
         //     'as' => 'blogs.index',

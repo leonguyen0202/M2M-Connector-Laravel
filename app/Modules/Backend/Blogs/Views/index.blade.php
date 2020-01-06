@@ -55,30 +55,6 @@
 @endsection
 
 @push('customJS')
-<script src="{{asset('js/backend.js')}}"></script>
-@if (session('success'))
-    @foreach (session('success') as $success)
-        <script type="text/javascript">
-            $.notify({
-                icon: "now-ui-icons ui-1_check",
-                message: "{!! $success !!}",
-
-            }, {
-                type: 'success',
-                timer: 3000,
-                allow_dismiss: false,
-                placement: {
-                    from: 'top',
-                    align: 'right',
-                },
-                animate: {
-                    enter: 'animated fadeInDown',
-                    exit: 'animated fadeOutUp'
-                },
-            });
-        </script>
-    @endforeach
-@endif
 @if ($is_table_view)
 <script>
     $(document).ready(function() {

@@ -14,6 +14,10 @@ const mix = require('laravel-mix');
  */
 
 mix.js('resources/js/app.js', 'public/js')
+    .js([
+        'public/js/frontend.js',
+        'public/js/backend.js',
+    ], 'public/js/mix.js',)
     .sass('resources/sass/app.scss', 'public/css')
     .scripts([
         'public/kit/js/core/popper.min.js',

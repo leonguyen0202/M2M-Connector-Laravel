@@ -3,12 +3,10 @@
 namespace App\Modules\Backend\Blogs\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\BlogCRUDJob;
 use App\Modules\Backend\Blogs\Models\Blog;
 use App\Modules\Backend\Blogs\Requests\BlogCreateFormRequest;
 use App\Modules\Backend\Categories\Models\Category;
 use App\Modules\Backend\Settings\Models\Developer;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -18,12 +16,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Request as FacadeRequest;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
-// use Illuminate\Http\File;
 use Yajra\DataTables\DataTables;
 
+// use Illuminate\Http\File;
+// use Carbon\Carbon;
+// use App\Jobs\BlogCRUDJob;
 // use JavaScript;
 
 class BlogController extends Controller
@@ -39,14 +39,16 @@ class BlogController extends Controller
         $this->middleware('auth');
         $this->is_table_view = true;
         $this->posts = null;
+        $this->data_slug = null;
         $this->edit_mode = false;
+        $this->languages = DB::table('localization')->select('locale_name', 'locale_code')->get();
         $this->config_locale = Config::get('app.fallback_locale');
         $this->upload_path = Developer::query()->where([['type', '=', 'upload']])->first();
     }
 
     /**
      * Rendering dataTable for table view
-     * 
+     *
      * @return \Yajra\DataTables\DataTables
      */
     public function table()
@@ -62,7 +64,7 @@ class BlogController extends Controller
         }
 
         return DataTables::of($posts)
-            ->addColumn('title', function (Blog $post) {
+            ->addColumn('title', function ($post) {
                 // Get Cookie first
                 if ($post->{Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_title'} != null) {
                     return split_sentence($post->{Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_title'}, 30, '...');
@@ -70,10 +72,10 @@ class BlogController extends Controller
                     return split_sentence($post->{Config::get('app.fallback_locale') . '_title'}, 30, '...');
                 }
             })
-            ->addColumn('categories', function (Blog $post) {
+            ->addColumn('categories', function ($post) {
                 return '<span class="badge badge-info">' . count(($post->categories)['categories_id']) . '</span>';
             })
-            ->addColumn('comments', function (Blog $post) {
+            ->addColumn('comments', function ($post) {
                 return '<span class="badge badge-warning">0</span>';
             })
             ->editColumn('action', function (Blog $post) {
@@ -90,17 +92,17 @@ class BlogController extends Controller
                             </a>
                             &nbsp;
                             <a href='#' class='btn btn-info btn-fab btn-icon btn-round blog-view' data-toggle='tooltip'
-                                data-placement='top' title='View Post'>
+                                data-placement='top' data-slug='" . $slug . "' title='View Post'>
                                 <i class='now-ui-icons ui-1_zoom-bold'></i>
                             </a>
                             &nbsp;
-                            <a href='".route('blogs.edit', $slug)."' class='btn btn-primary btn-fab btn-icon btn-round blog-edit'
+                            <a href='" . route('blogs.edit', $slug) . "' class='btn btn-primary btn-fab btn-icon btn-round blog-edit'
                                 data-toggle='tooltip' data-placement='top' title='Edit Post'>
                                 <i class='now-ui-icons ui-2_settings-90'></i>
                             </a>
                             &nbsp;
                             <a href='#' class='btn btn-danger btn-fab btn-icon btn-round blog-delete'
-                                data-toggle='tooltip' data-placement='top' title='Delete Post'>
+                                data-toggle='tooltip' data-slug='" . $slug . "' data-placement='top' title='Delete Post'>
                                 <i class='now-ui-icons ui-1_simple-remove'></i>
                             </a>
                         </div>";
@@ -112,18 +114,18 @@ class BlogController extends Controller
                     $slug = $post->{Config::get('app.fallback_locale') . '_slug'};
                 }
                 if (!file_exists($post->media_url('thumb'))) {
-                    return "<img src='".$post->getFirstMediaUrl('blog-images')."' alt='".$slug."' style='width:50px;height:33px'>";   
+                    return "<img src='" . $post->getFirstMediaUrl('blog-images') . "' alt='" . $slug . "' style='width:50px;height:33px'>";
                 }
-                
-                return "<img src='". $post->media_url('thumb') ."' alt='".$slug."'>";
+
+                return "<img src='" . $post->media_url('thumb') . "' alt='" . $slug . "'>";
             })
-            ->rawColumns(['background','categories', 'comments', 'action'])
+            ->rawColumns(['background', 'categories', 'comments', 'action'])
             ->make(true);
     }
 
     /**
      * Caching view for blog index
-     * 
+     *
      * @param string $view
      * @return \Illuminate\Http\Response
      */
@@ -141,6 +143,39 @@ class BlogController extends Controller
     }
 
     /**
+     * Getting tinyMCE text area content
+     *
+     * @param string $view
+     * @return \Illuminate\Http\Response
+     */
+    public function ajax_tinyMCE_description($slug)
+    {
+        if (!FacadeRequest::isMethod("POST")) {
+            return response()->json(['error' => __('form.not_support_method')]);
+        }
+
+        $selectable_description = array();
+
+        foreach ($this->languages as $key => $value) {
+            array_push($selectable_description, $value->locale_code . '_description');
+        }
+
+        array_push($selectable_description, 'author_id');
+
+        $post = Blog::query()->where([
+            [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'), '=', $slug],
+        ])->orWhere([
+            [(Config::get('app.fallback_locale') . '_slug'), '=', $slug],
+        ])->select($selectable_description)->first();
+
+        if ($post == null || $post->author_id != Auth::id()) {
+            return response()->json(['error' => 'Data is not exist']);
+        }
+
+        return response()->json(['data' => $post]);
+    }
+
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
@@ -148,16 +183,16 @@ class BlogController extends Controller
     public function index()
     {
         // Cache::forget('_' . Auth::id() . '_blog_data');
-        
-        $collection = collect([]);
+
+        // $collection = collect([]);
 
         $posts = Auth::user()->has_blogs;
 
-        foreach ($posts as $key => $value) {
-            $collection->push($value);
-        }
+        // foreach ($posts as $key => $value) {
+        //     $collection->push($value);
+        // }
 
-        Cache::store('database')->put('_' . Auth::id() . '_blog_data', $collection, Config::get('cache.lifetime'));
+        Cache::store('database')->put('_' . Auth::id() . '_blog_data', $posts, Config::get('cache.lifetime'));
 
         if (Cache::has('_' . Auth::id() . '_blog_view')) {
             $blog_view = Cache::get('_' . Auth::id() . '_blog_view');
@@ -186,20 +221,12 @@ class BlogController extends Controller
      */
     public function create()
     {
-        $view = array();
-        
-        $languages = DB::table('localization')->select('locale_code', 'locale_name')->get();
-
         $categories = Category::all();
 
-        foreach ($languages as $key => $value) {
-            array_push($view, strtolower($value->locale_name));
-        }
-
         return view('Blogs::mode')->with([
-            'languages' => $languages,
+            'languages' => $this->languages,
             'categories' => $categories,
-            'edit_mode' => $this->edit_mode
+            'edit_mode' => $this->edit_mode,
         ]);
     }
 
@@ -211,7 +238,7 @@ class BlogController extends Controller
      */
     public function store(Request $request)
     {
-        
+
         if (FacadeRequest::ajax() or !$request->isMethod('post')) {
             return Redirect::back()->with('errors', [__('form.not_support_method')]);
         }
@@ -224,9 +251,7 @@ class BlogController extends Controller
             return Redirect::back()->with('errors', $validator->errors()->all());
         }
 
-        $languages = DB::table('localization')->select('locale_code')->get();
-
-        foreach ($languages as $key => $value) {
+        foreach ($this->languages as $key => $value) {
             if ($value->locale_code != $this->config_locale) {
                 if ($request->{($value->locale_code) . '_title'} != null || $request->{($value->locale_code) . '_description'} != null) {
                     $validator = Validator::make($request->all(), $form_request->rules($value->locale_code), blog_form_message($value->locale_code));
@@ -245,11 +270,11 @@ class BlogController extends Controller
         if ($request->hasFile('background_image_file')) {
 
             Validator::make([$request->background_image_file], [
-                'background_image_file' => ['image', 'mimetypes:image/jpg, image/jpeg, image/png', 'max:3072']
+                'background_image_file' => ['image', 'mimetypes:image/jpg, image/jpeg, image/png', 'max:3072'],
             ], [
                 'background_image_file.image' => 'Upload file need to be image',
                 'background_image_file.mimetypes' => 'We only accept JPEG, JPG or PNG',
-                'background_image_file.max' => 'Your file has exceed :max bytes'
+                'background_image_file.max' => 'Your file has exceed :max bytes',
             ]);
 
             if ($validator->fails()) {
@@ -273,7 +298,7 @@ class BlogController extends Controller
 
         $array_object['background_image'] = $fileName;
 
-        foreach ($languages as $key => $language) {
+        foreach ($this->languages as $key => $language) {
             $array_object[($language->locale_code) . '_slug'] = ($array_object[($language->locale_code) . '_title'] != null) ? Str::slug($array_object[($language->locale_code) . '_title'], '-') : null;
         }
 
@@ -290,18 +315,18 @@ class BlogController extends Controller
             // $item->addMediaFromDisk($item->background_image, 'upload')->usingName($name)->usingFileName($item->background_image)->toMediaCollection('blog-images');
         }
 
-        $posts = collect([]);
-        
-        $cache = Auth::user()->has_blogs;
+        $cache_collection = collect([]);
+
+        $posts = Auth::user()->has_blogs;
 
         if (Cache::has('_' . Auth::id() . '_blog_data')) {
             Cache::forget('_' . Auth::id() . '_blog_data');
         }
 
-        foreach ($cache as $key => $value) {
-            $posts->push($value);
+        foreach ($posts as $key => $value) {
+            $cache_collection->push($value);
         }
-        
+
         Cache::store('database')->put('_' . Auth::id() . '_blog_data', $posts, Config::get('cache.lifetime'));
 
         return redirect()->route('blogs.index')->with('success', ['Blog created successfully']);
@@ -317,19 +342,13 @@ class BlogController extends Controller
     {
         $post = Blog::query()->where([
             [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'), '=', $slug],
+        ])->orWhere([
+            [(Config::get('app.fallback_locale') . '_slug'), '=', $slug],
         ])->first();
-
-        if ($post == null) {
-            $post = Blog::query()->where([
-                [(Config::get('app.fallback_locale') . '_slug'), '=', $slug],
-            ])->first();
-        }
 
         if ($post == null || $post->author_id != Auth::id()) {
             return redirect()->route('blogs.index')->with('error', ['Data is not existed']);
         }
-
-        $languages = DB::table('localization')->select('locale_code', 'locale_name')->get();
 
         $categories = Category::all();
 
@@ -337,9 +356,10 @@ class BlogController extends Controller
 
         return view('Blogs::mode')->with([
             'post' => $post,
-            'languages' => $languages,
+            'languages' => $this->languages,
             'categories' => $categories,
-            'edit_mode' => $this->edit_mode
+            'edit_mode' => $this->edit_mode,
+            'slug' => $slug,
         ]);
     }
 
@@ -369,13 +389,9 @@ class BlogController extends Controller
 
         $post = Blog::query()->where([
             [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'), '=', $slug],
+        ])->orWhere([
+            [(Config::get('app.fallback_locale') . '_slug'), '=', $slug],
         ])->first();
-
-        if ($post == null) {
-            $post = Blog::query()->where([
-                [(Config::get('app.fallback_locale') . '_slug'), '=', $slug],
-            ])->first();
-        }
 
         if ($post == null || $post->author_id != Auth::id()) {
             return response()->json(['error' => 'Data is not exist']);
@@ -391,6 +407,8 @@ class BlogController extends Controller
             $post->clearMediaCollection('blog-images');
         }
 
+        $post->delete();
+
         Cache::forget('_' . Auth::id() . '_blog_data');
 
         $auth_blogs = Auth::user()->has_blogs;
@@ -402,8 +420,6 @@ class BlogController extends Controller
         }
 
         Cache::store()->put('_' . Auth::id() . '_blog_data', $posts, Config::get('cache.lifetime'));
-
-        $post->delete();
 
         return response()->json(['success' => 'Data is deleted successfully!']);
     }

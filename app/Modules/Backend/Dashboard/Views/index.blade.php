@@ -28,7 +28,7 @@
                                         <i class="now-ui-icons ui-2_chat-round"></i>
                                     </div>
                                     <h3 class="info-title">859</h3>
-                                    <h6 class="stats-title">Messages</h6>
+                                    <h6 class="stats-title">Comments</h6>
                                 </div>
                             </div>
                         </div>
@@ -63,7 +63,7 @@
                                         <i class="now-ui-icons objects_support-17"></i>
                                     </div>
                                     <h3 class="info-title">353</h3>
-                                    <h6 class="stats-title">Support Requests</h6>
+                                    <h6 class="stats-title">Content Requests</h6>
                                 </div>
                             </div>
                         </div>
@@ -120,6 +120,17 @@
                             <div class="timeline-panel">
                                 <div class="timeline-heading">
                                     <span class="badge badge-info">Another Title</span>
+                                    {{-- <div class="dropdown pull-right">
+                                        <button type="button" class="btn btn-round btn-info dropdown-toggle"
+                                            data-toggle="dropdown">
+                                            <i class="now-ui-icons design_bullet-list-67"></i>
+                                        </button>
+                                        <div class="dropdown-menu">
+                                            <a class="dropdown-item" href="#">Action</a>
+                                            <a class="dropdown-item" href="#">Another action</a>
+                                            <a class="dropdown-item" href="#">Something else here</a>
+                                        </div>
+                                    </div> --}}
                                 </div>
                                 <div class="timeline-body">
                                     <p>Called I Miss the Old Kanye That’s all it was Kanye And I love you like Kanye
@@ -130,15 +141,22 @@
                                     <hr>
                                 </div>
                                 <div class="timeline-footer">
-                                    <div class="dropdown">
-                                        <button type="button" class="btn btn-round btn-info dropdown-toggle"
-                                            data-toggle="dropdown">
-                                            <i class="now-ui-icons design_bullet-list-67"></i>
-                                        </button>
-                                        <div class="dropdown-menu">
-                                            <a class="dropdown-item" href="#">Action</a>
-                                            <a class="dropdown-item" href="#">Another action</a>
-                                            <a class="dropdown-item" href="#">Something else here</a>
+                                    <div class="row">
+                                        <div class="col">
+                                            <span class="badge badge-success">Comments</span>
+                                        </div>
+                                        <div class="col">
+                                            <div class="dropdown pull-right">
+                                                <button type="button" class="btn btn-round btn-info dropdown-toggle"
+                                                    data-toggle="dropdown">
+                                                    <i class="now-ui-icons design_bullet-list-67"></i>
+                                                </button>
+                                                <div class="dropdown-menu">
+                                                    <a class="dropdown-item" href="#">Action</a>
+                                                    <a class="dropdown-item" href="#">Another action</a>
+                                                    <a class="dropdown-item" href="#">Something else here</a>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

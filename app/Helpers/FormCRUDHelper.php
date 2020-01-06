@@ -47,8 +47,6 @@ if (!function_exists('blog_form_message')) {
 
         if ($prefix == Config::get('app.fallback_locale')) {
             $messages['categories.required'] = __('form.blog_categories_required');
-
-            return $messages;
         }
         
         return $messages;
@@ -58,20 +56,39 @@ if (!function_exists('blog_form_message')) {
 if (!function_exists('blog_data_cache')) {
     function blog_data_cache(array $request, $user_id)
     {
-        $result = $request;
+        $request_array = $request;
 
-        unset($result['_token']);
+        unset($request_array['_token']);
 
-        unset($result['background_image']);
+        unset($request_array['background_image']);
 
-        unset($result['background_image_file']);
+        unset($request_array['background_image_file']);
 
-        foreach ($result as $key => $value) {
-            $array_object[$key] = form_json_convert($value, 'categories_id');
+        foreach ($request_array as $key => $value) {
+            $results[$key] = form_json_convert($value, 'categories_id');
         }
 
-        $array_object['author_id'] = $user_id;
+        $results['author_id'] = $user_id;
 
-        return $array_object;
+        return $results;
+    }
+}
+
+if (!function_exists('form_tags')) {
+    function form_tags($json_categories)
+    {
+        $string = '';
+
+        foreach ($json_categories as $key => $value) {
+            foreach ($value as $index => $item) {
+                $category = Category::find($item);
+
+                $string .= $category->title . ',';
+            }
+        }
+
+        $result = rtrim($string, ',');
+
+        return $result;
     }
 }

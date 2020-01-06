@@ -3,21 +3,21 @@
 @push('meta')
 <title>
     @if ($edit_mode)
-        Edit Blog    
+    Edit Blog
     @else
-        New Blog
+    New Blog
     @endif
-     - {{implode(" ", explode("_", env('APP_NAME')))}}
+    - {{implode(" ", explode("_", env('APP_NAME')))}}
 </title>
 @endpush
 
 @section('content')
-<div class="panel-header" style="height:300px">
+<div class="panel-header" style="height:320px;">
     <div class="header text-center">
         @if ($edit_mode)
             <h2 class="title">Edit Blog</h2>
             <p class="category">
-                This section will let you create new blog<br>
+                Image and categories will be kept the same if there is no new change<br>
             </p>
         @else
             <h2 class="title">New Blog</h2>
@@ -25,20 +25,26 @@
                 This section will let you create new blog<br>
             </p>
         @endif
-        
-        <a href="{{route('blogs.create')}}" class="btn btn-success" id="blog-submit">
+        <br>
+        <button type="button" class="btn btn-success btn-round" id="blog-submit">
             <i class="now-ui-icons ui-1_check"></i>&nbsp;Save
-        </a>
+        </button>
+        @if ($edit_mode)
+        &nbsp;
+        <button type="button" class="btn btn-primary btn-round" data-toggle="modal" data-target="#originalImageModal">
+            <i class="now-ui-icons media-1_album"></i> Original Image
+        </button>
+        @endif
     </div>
 </div>
 <div class="content">
-    
+
     <div class="row">
         <div class="col-md-12 col-xs-12">
             <div class="card">
                 <div class="card-body">
                     <div id="accordion" role="tablist" aria-multiselectable="true" class="card-collapse">
-                        <form action="{{route('blogs.store')}}" class="blog-form" id="blog-form"
+                        <form action="{{ ($edit_mode) ? route('blogs.update', $slug) : route('blogs.store') }}" class="blog-form" id="blog-form"
                             enctype="multipart/form-data" method="POST">
                             @csrf
                             @foreach ($languages as $key => $section)
@@ -67,9 +73,9 @@
                                     <div class="card-body">
                                         @if ($section->locale_code == Config::get('app.fallback_locale'))
                                         <div class="form-group tags-parent">
-                                            <input type="text" name="tags"
-                                                {!! ($edit_mode) ? " value='Systems Administration,Security in Computing,Internet of Things,Code Igniter,Vuejs' " : " value='' " !!}
-                                                class="tagsinput form-control tags"
+                                            <input type="text" name="tags" {!! ($edit_mode)
+                                                ? " value=' " . form_tags($post->categories) . " ' "
+                                                : " value='' " !!} class="tagsinput form-control tags"
                                                 data-role="tagsinput" data-color="info" disabled>
                                         </div>
                                         @endif
@@ -78,7 +84,9 @@
                                             <input type="text" class="form-control" autocomplete="off"
                                                 name="{{strtolower($section->locale_code)}}_title"
                                                 id="{{strtolower($section->locale_code)}}_title"
-                                                placeholder="{{__('backend.new_title_input_placeholder')}}" {!! ($edit_mode) ? "value='".$post->{ strtolower($section->locale_code).'_title' }."'" : '' !!}>
+                                                placeholder="{{__('backend.new_title_input_placeholder')}}" {!!
+                                                ($edit_mode) ? "value='" .$post->{
+                                            strtolower($section->locale_code).'_title' }."'" : '' !!}>
                                         </div>
                                         @if ($section->locale_code == Config::get('app.fallback_locale'))
                                         <div class="form-group">
@@ -86,14 +94,11 @@
                                                 for="{{strtolower($section->locale_code)}}_background_image">Background
                                                 Image</label>
                                             <div class="form-group form-file-upload form-file-simple">
-                                                <input type="text"
-                                                    name="background_image"
-                                                    id="background_image"
+                                                <input type="text" name="background_image" id="background_image"
                                                     class="form-control inputFileVisible" autocomplete="off"
                                                     placeholder="{{__('backend.new_background_image_input_placeholder')}}">
                                                 <input type="file" accept="image/jpg, image/png, image/jpeg"
-                                                    name="background_image_file"
-                                                    class="inputFileHidden">
+                                                    name="background_image_file" class="inputFileHidden">
                                             </div>
                                         </div>
                                         <div class="form-group">
@@ -101,8 +106,7 @@
                                                 for="{{strtolower($section->locale_code)}}_categories">Categories</label>
                                             <select
                                                 class="selectpicker form-control {{strtolower($section->locale_code)}}_categories"
-                                                data-live-search="true"
-                                                name="categories[]" multiple
+                                                data-live-search="true" name="categories[]" multiple
                                                 data-max-options="5" data-style="select-with-transition"
                                                 title="{{__('backend.new_categories_input_placeholder')}}"
                                                 data-size="10" id="{{strtolower($section->locale_code)}}_categories">
@@ -134,35 +138,43 @@
     </div>
 
 </div>
+@if ($edit_mode)
+<div class="modal fade" id="originalImageModal" tabindex="-1" role="dialog" aria-labelledby="originalImageModal"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="origianlImageModalLabel">Original Image</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row text-center">
+                    <div class="col">
+                        <img src="{{$post->media_url('slider')}}" alt="{{$post->en_title}}">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary ml-auto" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 @endsection
 
 @push('customJS')
 <script src="{{ asset('js/tinymce/js/tinymce/tinymce.min.js') }}"></script>
 
-@if (session('errors'))
-    @foreach (session('errors') as $error)
-        <script type="text/javascript">
-            $.notify({
-                icon: "now-ui-icons ui-1_simple-remove",
-                message: "{!! $error !!}",
 
-            }, {
-                type: 'danger',
-                timer: 5000,
-                allow_dismiss: false,
-                placement: {
-                    from: 'top',
-                    align: 'right',
-                },
-                animate: {
-                    enter: 'animated fadeInDown',
-                    exit: 'animated fadeOutUp'
-                },
-            });
-        </script>
-    @endforeach
+
+@if ($edit_mode)
+<script type="text/javascript">
+
+</script>
 @endif
-
 <script type="text/javascript">
     $(document).ready(function () {
         $('#blog-submit').on('click', function (e) {
@@ -170,37 +182,6 @@
             document.getElementById('blog-form').submit();
         });
 
-        $('#notification').on('click', function (e) {
-            e.preventDefault();
-
-            var align = ['left', 'center', 'right'];
-
-            color = 'danger';
-
-            $.notify({
-                icon: "now-ui-icons ui-1_bell-53",
-                message: "Welcome to <b>Now Ui Dashboard Pro</b> - a beautiful freebie for every web developer."
-
-            }, {
-                type: color,
-                timer: 4000,
-                placement: {
-                    from: 'top',
-                    align: align[Math.floor(Math.random() * align.length)],
-                },
-                animate: {
-                    enter: 'animated fadeInDown',
-                    exit: 'animated fadeOutUp'
-                },
-            });
-        });
-    })
-</script>
-{{-- @if ($edit_mode)
-
-@else --}}
-<script type="text/javascript">
-    $(document).ready(function () {
         @foreach ($languages as $tiny_selector)
         var {!! $tiny_selector->locale_code . '_description' !!} = '{!! $tiny_selector->locale_code !!}_description';
         tinymce.init({

@@ -6,3 +6,5 @@
 <script src="{{asset('js/core/main.min.js')}}" type="text/javascript"></script>
 
 <script src="{{asset('js/core/utilities.min.js')}}" type="text/javascript"></script>
+
+<script src="{{asset('js/mix.js')}}"></script>

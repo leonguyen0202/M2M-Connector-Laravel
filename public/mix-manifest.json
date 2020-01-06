@@ -1,6 +1,7 @@
 {
     "/js/app.js": "/js/app.js",
     "/css/app.css": "/css/app.css",
+    "/js/mix.js": "/js/mix.js",
     "/js/core/kit.min.js": "/js/core/kit.min.js",
     "/js/core/utilities.min.js": "/js/core/utilities.min.js",
     "/js/core/main.min.js": "/js/core/main.min.js"

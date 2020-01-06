@@ -29,11 +29,53 @@
     </div>
     @include('backend._partials._javascript')
     @stack('customJS')
-    <script>
-        $(document).ready(function () {
-            
-        });
+    @if (session('errors'))
+    @foreach (session('errors') as $error)
+    <script type="text/javascript">
+        $.notify({
+                icon: "now-ui-icons ui-1_simple-remove",
+                message: "{!! $error !!}",
+
+            }, {
+                type: 'danger',
+                timer: 5000,
+                allow_dismiss: false,
+                placement: {
+                    from: 'top',
+                    align: 'right',
+                },
+                animate: {
+                    enter: 'animated fadeInDown',
+                    exit: 'animated fadeOutUp'
+                },
+            });
     </script>
+    @endforeach
+    @endif
+
+    @if (session('success'))
+    @foreach (session('success') as $success)
+        <script type="text/javascript">
+            $.notify({
+                icon: "now-ui-icons ui-1_check",
+                message: "{!! $success !!}",
+
+            }, {
+                type: 'success',
+                timer: 3000,
+                allow_dismiss: false,
+                placement: {
+                    from: 'top',
+                    align: 'right',
+                },
+                animate: {
+                    enter: 'animated fadeInDown',
+                    exit: 'animated fadeOutUp'
+                },
+            });
+        </script>
+    @endforeach
+@endif
 </body>
 
 </html>

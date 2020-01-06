@@ -49,6 +49,13 @@ class Handler extends ExceptionHandler
         if ($exception instanceof \Spatie\MediaLibrary\Exceptions\FileCannotBeAdded\FileUnacceptableForCollection) {
             return redirect()->back()->with('error', ["We only accept JPG, JPEG & PNG"]);
         }
+
+        if ($this->isHttpException($exception)) {
+            if ($exception->getStatusCode() == 404) {
+                return redirect()->back()->with('error', ["Invalid page or request!"]);
+            }
+        }
+
         return parent::render($request, $exception);
     }
 }

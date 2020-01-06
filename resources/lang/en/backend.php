@@ -10,6 +10,9 @@ return [
      * Dashboard home page
      */
     'dashboard' => 'Dashboard',
+    'categories' => 'Categories',
+    'bookmark' => 'Bookmark',
+    'follows' => 'Follows',
 
     /**
      * Blog page
