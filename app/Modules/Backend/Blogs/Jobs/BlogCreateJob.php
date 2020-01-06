@@ -3,18 +3,21 @@
 namespace App\Modules\Backend\Blogs\Jobs;
 
 use App\Modules\Backend\Blogs\Models\Blog;
-use App\Modules\Backend\Settings\Models\Developer;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Config;
+use App\User;
 
 class BlogCreateJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public $method;
 
     public $file;
 
@@ -29,12 +32,13 @@ class BlogCreateJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($file, $name, $fileName, array $array_data)
+    public function __construct($file, $name, $fileName, array $array_data, $method)
     {
         $this->files = $file;
         $this->name = $name;
         $this->fileName = $fileName;
         $this->array_data = $array_data;
+        $this->method = $method;
     }
 
     /**
@@ -44,6 +48,10 @@ class BlogCreateJob implements ShouldQueue
      */
     public function handle()
     {
-        // $blog = Blog::create($);
+        if (strtolower($this->method) == 'post') {
+            $blog = Blog::create($this->array_data);
+        } else if (strtolower($this->method) == 'put') {
+            # code...
+        }
     }
 }

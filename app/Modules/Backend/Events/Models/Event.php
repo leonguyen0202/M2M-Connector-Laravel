@@ -4,7 +4,7 @@ namespace App\Modules\Backend\Events\Models;
 
 // use App\Traits\CleanUpProjectTrait;
 use App\User;
-// use Cviebrock\EloquentSluggable\Sluggable;
+use Cviebrock\EloquentSluggable\Sluggable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
 use Webpatser\Uuid\Uuid;
@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 class Event extends Model
 {
-    // use Sluggable;
+    use Sluggable;
 
     public $incrementing = false;
 
@@ -88,18 +88,18 @@ class Event extends Model
      *
      * @return array
      */
-    // public function sluggable()
-    // {
-    //     $languages = array();
+    public function sluggable()
+    {
+        $languages = array();
         
-    //     $db = DB::table('localization')->get();
+        $db = DB::table('localization')->get();
 
-    //     for ($i=0; $i < count($db) ; $i++) { 
-    //         $languages[($db[$i])->locale_code.'_slug'] = [ 'source'=>($db[$i])->locale_code.'_title' ];
-    //     }
+        for ($i=0; $i < count($db) ; $i++) { 
+            $languages[($db[$i])->locale_code.'_slug'] = [ 'source'=>($db[$i])->locale_code.'_title' ];
+        }
 
-    //     return $languages;
-    // }
+        return $languages;
+    }
 
     public function getMetaAttribute($value)
     {

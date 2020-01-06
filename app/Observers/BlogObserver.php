@@ -6,99 +6,74 @@ use App\Modules\Backend\Blogs\Models\Blog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
+use App\User;
 
 class BlogObserver
 {
     /**
      * Handle the blog "created" event.
      *
-     * @param  \App\Blog  $blog
+     * @param  \App\Modules\Backend\Blogs\Models\Blog  $blog
      * @return void
      */
     public function created(Blog $blog)
     {
-        if (Auth::check() && Auth::id() == $blog->author_id) {
-            if (Cache::has('_' . Auth::id() . '_blog_data')) {
-                Cache::forget('_' . Auth::id() . '_blog_data');
-            }
+        if ($blog->background_image != 'default-background.jpg') {
+            $name = explode(".", $blog->background_image);
 
-            $data = collect([]);
-
-            $posts = Auth::user()->has_blogs;
-
-            foreach ($posts as $key => $value) {
-                $data->push($value);
-            }
-
-            Cache::store('database')->put('_' . Auth::id() . '_blog_data', $data, Config::get('cache.lifetime'));
+            $blog->add_media_from_disk($name[0], $blog->background_image);
         }
-    }
 
-    /**
-     * Handle the blog "saved" event.
-     *
-     * @param  \App\Blog  $blog
-     * @return void
-     */
-    public function saving(Blog $blog)
-    {
-        if (Auth::check() && Auth::id() == $blog->author_id) {
-            if (Cache::has('_' . Auth::id() . '_blog_data')) {
-                Cache::forget('_' . Auth::id() . '_blog_data');
-            }
+        $user = $blog->author;
 
-            $data = collect([]);
-
-            $posts = Auth::user()->has_blogs;
-
-            foreach ($posts as $key => $value) {
-                $data->push($value);
-            }
-
-            Cache::store('database')->put('_' . Auth::id() . '_blog_data', $data, Config::get('cache.lifetime'));
+        if (Cache::has('_'. $user->id . '_blog_data')) {
+            Cache::forget('_'. $user->id . '_blog_data');
+            Cache::store('database')->put('_'. $user->id . '_blog_data', $user->has_blogs, Config::get('cache.lifetime'));
         }
     }
 
     /**
      * Handle the blog "updated" event.
      *
-     * @param  \App\Blog  $blog
+     * @param  \App\Modules\Backend\Blogs\Models\Blog  $blog
      * @return void
      */
     public function updated(Blog $blog)
     {
-        if (Auth::check() && Auth::id() == $blog->author_id) {
-            if (Cache::has('_' . Auth::id() . '_blog_data')) {
-                Cache::forget('_' . Auth::id() . '_blog_data');
+        if ($blog->isDirty('background_image')) {
+            if (!($blog->getMedia('blog-images'))->isEmpty()) {
+                $blog->clearMediaCollection('blog-images');
             }
 
-            $data = collect([]);
+            $name = explode(".", $blog->background_image);
 
-            $posts = Auth::user()->has_blogs;
+            $blog->add_media_from_disk($name[0], $blog->background_image);
+        }
+        $user = $blog->author;
 
-            foreach ($posts as $key => $value) {
-                $data->push($value);
-            }
-
-            Cache::store('database')->put('_' . Auth::id() . '_blog_data', $data, Config::get('cache.lifetime'));
+        if (Cache::has('_'. $user->id . '_blog_data')) {
+            Cache::forget('_'. $user->id . '_blog_data');
+            Cache::store('database')->put('_'. $user->id . '_blog_data', $user->has_blogs, Config::get('cache.lifetime'));
         }
     }
 
     /**
      * Handle the blog "deleted" event.
      *
-     * @param  \App\Blog  $blog
+     * @param  \App\Modules\Backend\Blogs\Models\Blog  $blog
      * @return void
      */
     public function deleted(Blog $blog)
     {
-        //
+        if (!($blog->getMedia('blog-images'))->isEmpty()) {
+            $blog->clearMediaCollection('blog-images');
+        }
     }
 
     /**
      * Handle the blog "restored" event.
      *
-     * @param  \App\Blog  $blog
+     * @param  \App\Modules\Backend\Blogs\Models\Blog  $blog
      * @return void
      */
     public function restored(Blog $blog)

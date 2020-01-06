@@ -2,16 +2,15 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\ServiceProvider;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
-use Spatie\MediaLibrary\Models\Media;
-use Webpatser\Uuid\Uuid;
-use JavaScript;
-use Illuminate\Support\Facades\Auth;
 use App\Modules\Backend\Blogs\Models\Blog;
 use App\Observers\BlogObserver;
+use App\User;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\ServiceProvider;
+use Spatie\MediaLibrary\Models\Media;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Webpatser\Uuid\Uuid;
 
 class AppServiceProvider extends ServiceProvider
 {

@@ -13,6 +13,7 @@ return [
     */
     'not_support_language'=> "Language is not supported",
     'not_support_method'=> "Method is not supported",
+    'data_not_exist'=> "Data is not existed",
 
     'email_unique' => 'Email has been taken.\n Please choose another.',
     'email_required' => 'Please provide us your email',

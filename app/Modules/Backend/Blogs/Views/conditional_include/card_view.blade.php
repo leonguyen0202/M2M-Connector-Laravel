@@ -3,8 +3,13 @@
     @foreach ($posts as $post)
     <div class="col-md-4">
         <div class="card" style="width: 20rem;">
+            @if ($post instanceof \App\Modules\Backend\Blogs\Models\Blog)
             <img class="card-img-top" alt="Card image cap"
-                src="{{ ( !file_exists($post->media_url('card')) ) ? $post->getFirstMediaUrl('blog-images') : $post->media_url('card') }}">
+            src="{{ ( !file_exists($post->media_url('card')) ) ? $post->getFirstMediaUrl('blog-images') : $post->media_url('card') }}">
+            @else
+            <img class="card-img-top" alt="Card image cap"
+                src="{{ asset('storage/images/upload/'.$post->background_image) }}">
+            @endif
             <div class="card-body">
                 <h4 class="card-title">
                     @if ($post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'} != null)

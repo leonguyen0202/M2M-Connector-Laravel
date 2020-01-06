@@ -4,7 +4,7 @@ namespace App\Modules\Backend\Blogs\Models;
 
 // use App\Traits\CleanUpProjectTrait;
 use App\User;
-// use Cviebrock\EloquentSluggable\Sluggable;
+use Cviebrock\EloquentSluggable\Sluggable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -19,9 +19,7 @@ use Illuminate\Support\Facades\Cookie;
 
 class Blog extends Model implements HasMedia
 {
-    // use Sluggable;
-
-    use HasMediaTrait;
+    use HasMediaTrait, Sluggable;
 
     public $incrementing = false;
 
@@ -104,19 +102,6 @@ class Blog extends Model implements HasMedia
                 $model->id = (string) Uuid::generate(4);
             } while ($model->where($model->getKeyName(), $model->id)->first() != null);
         });
-
-        self::saved(function ($model)
-        {
-            if (Auth::check() && Auth::id() == $model->author_id) {
-                $blogs = Auth::user()->has_blogs;
-
-                if (Cache::has('_'. Auth::id() . '_blog_data')) {
-                    Cache::forget('_'. Auth::id() . '_blog_data');
-                }
-
-                Cache::store('database')->put('_'. Auth::id() . '_blog_data', $blogs, Config::get('cache.lifetime'));
-            }
-        });
     }
 
     protected function getColumns()
@@ -138,18 +123,18 @@ class Blog extends Model implements HasMedia
      *
      * @return array
      */
-    // public function sluggable()
-    // {
-    //     $languages = array();
+    public function sluggable()
+    {
+        $languages = array();
 
-    //     $db = DB::table('localization')->get();
+        $db = DB::table('localization')->get();
 
-    //     for ($i = 0; $i < count($db); $i++) {
-    //         $languages[($db[$i])->locale_code . '_slug'] = ['source' => ($db[$i])->locale_code . '_title'];
-    //     }
+        for ($i = 0; $i < count($db); $i++) {
+            $languages[($db[$i])->locale_code . '_slug'] = ['source' => ($db[$i])->locale_code . '_title'];
+        }
 
-    //     return $languages;
-    // }
+        return $languages;
+    }
 
     public function getMetaAttribute($value)
     {

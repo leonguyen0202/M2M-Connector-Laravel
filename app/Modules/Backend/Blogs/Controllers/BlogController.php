@@ -3,10 +3,12 @@
 namespace App\Modules\Backend\Blogs\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Backend\Blogs\Jobs\BlogCreateJob;
 use App\Modules\Backend\Blogs\Models\Blog;
-use App\Modules\Backend\Blogs\Requests\BlogCreateFormRequest;
+use App\Modules\Backend\Blogs\Requests\BlogFormRequestRules;
 use App\Modules\Backend\Categories\Models\Category;
 use App\Modules\Backend\Settings\Models\Developer;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -22,8 +24,6 @@ use Illuminate\Support\Str;
 use Yajra\DataTables\DataTables;
 
 // use Illuminate\Http\File;
-// use Carbon\Carbon;
-// use App\Jobs\BlogCRUDJob;
 // use JavaScript;
 
 class BlogController extends Controller
@@ -118,11 +118,11 @@ class BlogController extends Controller
                     if (!file_exists($post->media_url('thumb'))) {
                         return "<img src='" . $post->getFirstMediaUrl('blog-images') . "' alt='" . $slug . "' style='width:50px;height:33px'>";
                     }
-    
+
                     return "<img src='" . $post->media_url('thumb') . "' alt='" . $slug . "'>";
                 }
-                return "<img src='".asset('storage/images/upload/'. $post->background_image)."' alt='".$slug."' style='width:50px;height:33px'>";
-                
+                return "<img src='" . asset('storage/images/upload/' . $post->background_image) . "' alt='" . $slug . "' style='width:50px;height:33px'>";
+
             })
             ->rawColumns(['background', 'categories', 'comments', 'action'])
             ->make(true);
@@ -167,7 +167,7 @@ class BlogController extends Controller
         }
 
         $result = Blog::query()->where([
-            ['author_id', '=', Auth::id()]
+            ['author_id', '=', Auth::id()],
         ])->where([
             [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'), '=', $slug],
         ])->orWhere([
@@ -175,7 +175,7 @@ class BlogController extends Controller
         ])->select($selectable_description)->first();
 
         if ($result == null) {
-            return response()->json(['error' => 'Data is not exist']);
+            return response()->json(['error' => __('form.data_not_exist')]);
         }
 
         return response()->json(['data' => $result]);
@@ -188,17 +188,7 @@ class BlogController extends Controller
      */
     public function index()
     {
-        // Cache::forget('_' . Auth::id() . '_blog_data');
-
-        // $collection = collect([]);
-
-        // $posts = Auth::user()->has_blogs;
-
-        // foreach ($posts as $key => $value) {
-        //     $collection->push($value);
-        // }
-
-        // Cache::store('database')->put('_' . Auth::id() . '_blog_data', $posts, Config::get('cache.lifetime'));
+        Cache::store('database')->put('_' . Auth::id() . '_blog_data', Auth::user()->has_blog, Config::get('cache.lifetime'));
 
         if (Cache::has('_' . Auth::id() . '_blog_view')) {
             $blog_view = Cache::get('_' . Auth::id() . '_blog_view');
@@ -248,9 +238,9 @@ class BlogController extends Controller
             return Redirect::back()->with('errors', [__('form.not_support_method')]);
         }
 
-        $form_request = new BlogCreateFormRequest();
+        $form_request = new BlogFormRequestRules();
 
-        $validator = Validator::make($request->all(), $form_request->rules($this->config_locale), blog_form_message($this->config_locale));
+        $validator = Validator::make($request->all(), $form_request->rules('create',$this->config_locale), blog_form_message($this->config_locale));
 
         if ($validator->fails()) {
             return Redirect::back()->with('errors', $validator->errors()->all());
@@ -293,8 +283,6 @@ class BlogController extends Controller
             $fileName = $name . '.' . $files->getClientOriginalExtension();
 
             Storage::disk('upload')->putFileAs('', $files, $fileName);
-
-            // $request->background_image_file->move('images/upload/posts/', $fileName);
         } else {
             $fileName = 'default-background.jpg';
         }
@@ -307,18 +295,9 @@ class BlogController extends Controller
             $array_object[($language->locale_code) . '_slug'] = ($array_object[($language->locale_code) . '_title'] != null) ? Str::slug($array_object[($language->locale_code) . '_title'], '-') : null;
         }
 
-        $blog = Blog::create($array_object);
+        $job = (new BlogCreateJob($request->background_image_file, $name, $fileName, $array_object, FacadeRequest::method()))->delay(Carbon::now()->addSeconds(10));
 
-        if ($request->hasFile('background_image_file')) {
-            # code... addMediaFromRequest
-            $item = Blog::find($blog->id);
-
-            // $item->add_media_from_disk($name, $fileName);
-
-            $blog->addMedia($files)->usingName($name)->usingFileName($blog->background_image)->toMediaCollection('blog-images');
-
-            // $item->addMediaFromDisk($item->background_image, 'upload')->usingName($name)->usingFileName($item->background_image)->toMediaCollection('blog-images');
-        }
+        dispatch($job);
 
         $cache_collection = collect([]);
 
@@ -339,10 +318,6 @@ class BlogController extends Controller
         Cache::store('database')->put('_' . Auth::id() . '_blog_data', $cache_collection, Config::get('cache.lifetime'));
 
         return redirect()->route('blogs.index')->with('success', ['Blog created successfully']);
-
-        $job = (new BlogCreateJob($name, $fileName, $array_object))->delay(Carbon::now()->addSeconds(10));
-
-        dispatch($job);
     }
 
     /**
@@ -365,13 +340,16 @@ class BlogController extends Controller
     public function edit($slug)
     {
         $post = Blog::query()->where([
+            ['author_id', '=', Auth::id()]
+        ])
+        ->where([
             [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'), '=', $slug],
         ])->orWhere([
             [(Config::get('app.fallback_locale') . '_slug'), '=', $slug],
         ])->first();
 
-        if ($post == null || $post->author_id != Auth::id()) {
-            return redirect()->route('blogs.index')->with('error', ['Data is not existed']);
+        if ($post == null) {
+            return redirect()->route('blogs.index')->with('error', [__('form.data_not_exist')]);
         }
 
         $categories = Category::all();
@@ -391,15 +369,75 @@ class BlogController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  string  $id
+     * @param  string  $slug
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $slug)
     {
-        echo $slug. "<br/>";
+        $cache = Cache::get('_' . Auth::id() . '_blog_data');
+        
+        foreach ($this->languages as $key => $value) {
+            foreach ($cache as $index => $item) {
+                if ($item->{$value->locale_code . '_slug'} == $slug) {
+                    $cache->forget($index);
+                }
+            }
+        }
 
-        return $request->all();
-        //
+        if (Cache::has('_' . Auth::id() . '_blog_data')) {
+            Cache::forget('_' . Auth::id() . '_blog_data');
+        }
+
+        Cache::store()->put('_' . Auth::id() . '_blog_data', $cache, Config::get('cache.lifetime'));
+
+        return redirect()->route('blogs.index')->with('success', ['Cache updated successfully']);
+
+        if (FacadeRequest::ajax() or !$request->isMethod('put')) {
+            return Redirect::back()->with('errors', [__('form.not_support_method')]);
+        }
+
+        $post = Blog::query()->where([
+            ['author_id', '=', Auth::id()]
+        ])
+        ->where([
+            [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'), '=', $slug],
+        ])->orWhere([
+            [(Config::get('app.fallback_locale') . '_slug'), '=', $slug],
+        ])->first();
+
+        if ($post == null) {
+            return Redirect::back()->with('errors', [ __('form.data_not_exist') ]);
+        }
+
+        if ($validator->fails()) {
+            return Redirect::back()->with('errors', $validator->errors()->all());
+        }
+
+        if (isset($request->background_image_file)) {
+            Validator::make([$request->background_image_file], [
+                'background_image_file' => ['image', 'mimetypes:image/jpg, image/jpeg, image/png', 'max:3072'],
+            ], [
+                'background_image_file.image' => 'Upload file need to be image',
+                'background_image_file.mimetypes' => 'We only accept JPEG, JPG or PNG',
+                'background_image_file.max' => 'Your file has exceed :max bytes',
+            ]);
+
+            if ($validator->fails()) {
+                return Redirect::back()->with('errors', $validator->errors()->all());
+            }
+
+            $files = $request->file('background_image_file');
+
+            $name = str_shuffle(Str::random(60)) . '_' . time();
+
+            $fileName = $name . '.' . $files->getClientOriginalExtension();
+
+            Storage::disk('upload')->putFileAs('', $files, $fileName);
+        }
+
+        dd( $request->all() );
+        
+        return redirect()->route('blogs.index')->with('success', ['Blog updated successfully']);
     }
 
     /**
@@ -415,16 +453,15 @@ class BlogController extends Controller
         }
 
         $post = Blog::query()->where([
-            ['author_id', '=', Auth::id()]
-        ])
-        ->where([
-            [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'), '=', $slug],
-        ])->orWhere([
+            ['author_id', '=', Auth::id()],
+        ])->where([
+                [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_slug'), '=', $slug],
+            ])->orWhere([
             [(Config::get('app.fallback_locale') . '_slug'), '=', $slug],
         ])->first();
 
         if ($post == null) {
-            return response()->json(['error' => 'Data is not exist']);
+            return response()->json(['error' => __('form.data_not_exist')]);
         }
 
         try {
