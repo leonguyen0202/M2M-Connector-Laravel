@@ -1,5 +1,7 @@
 /node_modules
 /public/hot
+/public/dashboard
+/public/kit
 /public/storage
 /storage/*.key
 /vendor
