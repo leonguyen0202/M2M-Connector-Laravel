@@ -3,14 +3,16 @@
 namespace App\Providers;
 
 use App\Modules\Backend\Blogs\Models\Blog;
+use App\Modules\Backend\Events\Jobs\EventStatusUpdateJob;
 use App\Observers\BlogObserver;
-use App\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Spatie\MediaLibrary\Models\Media;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Webpatser\Uuid\Uuid;
+use Illuminate\Support\Facades\DB;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -71,5 +73,15 @@ class AppServiceProvider extends ServiceProvider
         /**
          * End Observe Model
          */
+
+        if (DB::table('jobs')->count() == 0) {
+            // DB::statement('SET FOREIGN_KEY_CHECKS = 0');
+            DB::statement("ALTER TABLE jobs AUTO_INCREMENT = 1");
+            // DB::statement('SET FOREIGN_KEY_CHECKS = 1');
+        }
+
+        $job = (new EventStatusUpdateJob())->delay(Carbon::now()->addSeconds(rand(5,40)));
+
+        dispatch($job);
     }
 }

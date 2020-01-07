@@ -521,19 +521,21 @@ class BlogController extends Controller
             return response()->json(['error' => __('form.data_not_exist')]);
         }
 
-        $cache = $this->remove_cache($slug);
-
         if (!($post->getMedia('blog-images'))->isEmpty()) {
             $post->clearMediaCollection('blog-images');
         }
 
-        $post->delete();
+        $cache = $this->remove_cache($slug);
+
+        $job = (new BlogCRUDJob($post->id, array(), FacadeRequest::method()))->delay(Carbon::now()->addSeconds(rand(40,60)));
+
+        dispatch($job);
+
+        Cache::store('database')->put('_' . Auth::id() . '_blog_data', $cache, Config::get('cache.lifetime'));
 
         return response()->json(['success' => 'Data is deleted successfully!']);
 
-        $job = (new BlogCRUDJob($post->id, null, FacadeRequest::method()))->delay(Carbon::now()->addSeconds(rand(5,20)));
-
-        dispatch($job);
+        
     }
 
     protected function remove_cache($slug)

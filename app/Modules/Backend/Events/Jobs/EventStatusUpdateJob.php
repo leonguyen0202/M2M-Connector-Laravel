@@ -2,43 +2,27 @@
 
 namespace App\Modules\Backend\Events\Jobs;
 
-use App\Modules\Backend\Blogs\Models\Blog;
+use App\Modules\Backend\Events\Models\Event;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Config;
-use App\User;
+use Illuminate\Support\Facades\DB;
 
 class EventStatusUpdateJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    public $method;
-
-    public $file;
-
-    public $name;
-
-    public $fileName;
-
-    public $array_data;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($file, $name, $fileName, array $array_data, $method)
+    public function __construct()
     {
-        $this->files = $file;
-        $this->name = $name;
-        $this->fileName = $fileName;
-        $this->array_data = $array_data;
-        $this->method = $method;
+
     }
 
     /**
@@ -48,10 +32,17 @@ class EventStatusUpdateJob implements ShouldQueue
      */
     public function handle()
     {
-        if (strtolower($this->method) == 'post') {
-            $blog = Blog::create($this->array_data);
-        } else if (strtolower($this->method) == 'put') {
-            # code...
+        if (DB::table('jobs')->count() == 0) {
+            // DB::statement('SET FOREIGN_KEY_CHECKS = 0');
+            DB::statement("ALTER TABLE jobs AUTO_INCREMENT = 1");
+            // DB::statement('SET FOREIGN_KEY_CHECKS = 1');
         }
+        
+        Event::query()->where([
+            ['is_completed', '=', '0'],
+            ['event_date', '<', Carbon::now()->toDateTimeString()],
+        ])->update([
+            'is_completed' => '1',
+        ]);
     }
 }

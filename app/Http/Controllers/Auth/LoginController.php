@@ -106,18 +106,6 @@ class LoginController extends Controller
 
         dispatch($job);
 
-        Cache::store('database')->put('_' . $user->id . '_blog_view', 'table', Config::get('cache.lifetime'));
-
-        $auth_blogs = Auth::user()->has_blogs;
-        
-        $posts = collect([]);
-
-        foreach ($auth_blogs as $key => $value) {
-            $posts->push($value);
-        }
-
-        Cache::store('database')->put('_' . $user->id . '_blog_data', $posts, Config::get('cache.lifetime'));
-
         return (url()->previous() != RouteServiceProvider::HOME) ? redirect()->to(url()->previous()) : redirect()->to(RouteServiceProvider::HOME);
     }
 
@@ -134,7 +122,7 @@ class LoginController extends Controller
         $subscribe_table = Schema::getColumnListing('subscribes');
 
         foreach ($subscribe_table as $key => $value) {
-            $type = DB::connection()->getDoctrineColumn('subscribes', $value)->getType()->getName();
+            $type = \Illuminate\Support\Facades\DB::connection()->getDoctrineColumn('subscribes', $value)->getType()->getName();
 
             if ($type == 'json') {
                 array_push($json_column, $value);
@@ -150,6 +138,8 @@ class LoginController extends Controller
         Cache::forget('_' . Auth::id() . '_blog_view');
 
         Cache::forget('_' . Auth::id() . '_blog_data');
+
+        Cache::forget('_' . Auth::id() . '_full_calendar_event');
 
         $this->guard()->logout();
 

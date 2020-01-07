@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Jobs\DatabaseCacheJob;
 use App\Modules\Backend\Categories\Models\Category;
+use App\Modules\Backend\Events\Models\Event;
 use App\Traits\BotmanTraits;
 use Carbon\Carbon;
 use Closure;
@@ -12,8 +13,9 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 
-class DataCache
+class CategoryCache
 {
     use BotmanTraits;
     /**
@@ -35,15 +37,7 @@ class DataCache
             }
         });
 
-        if (Auth::user()) {
-            if (!Cache::has('_' . Auth::id() . '_blog_data')) {
-                Cache::store('database')->put('_' . Auth::id() . '_blog_data', Auth::user()->has_blogs, Config::get('cache.lifetime'));
-            }
-
-            if (!Cache::has('_' . Auth::id() . '_blog_view')) {
-                Cache::store('database')->put('_' . Auth::id() . '_blog_view', 'table', Config::get('cache.lifetime'));
-            }
-        }
+        
 
         return $next($request);
     }

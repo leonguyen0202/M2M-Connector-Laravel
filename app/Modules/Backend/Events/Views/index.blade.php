@@ -13,6 +13,10 @@
         <p class="category">
             You can now view or create new event via our calendar
         </p>
+        &nbsp;
+        <a href="#" class="btn btn-success test-button">
+            <i class="now-ui-icons ui-1_simple-add"></i>&nbsp;Test
+        </a>
     </div>
 </div>
 <div class="content">
@@ -32,6 +36,34 @@
 
 @push('customJS')
 <script type="text/javascript">
+    $(document).on('click', '.test-button', function (e) {
+        e.preventDefault();
+
+        $.ajax({
+            url: '/dashboard/events/render_event',
+            method: 'GET',
+            success: (data) => {
+                var eventData;
+
+                $.each(data, function (k,v) {
+                    eventData = {
+                        title: v.en_title,
+                        start: v.event_date,
+                        className: 'event-green'
+                    };
+                    $calendar.fullCalendar('renderEvent', eventData, true); 
+                });
+
+                $calendar.fullCalendar('unselect');
+            },
+            error: (jqXHR, textStatus, errorThrown) => {
+                console.log(jqXHR);
+                console.log(textStatus);
+                console.log(errorThrown);
+            },
+        });
+    });
+
     $(document).ready(function() {
         $calendar = $('#calendar');
 
@@ -78,69 +110,36 @@
                 cancelButtonClass: 'btn btn-danger',
                 buttonsStyling: false
                 }).then((result) => {
-                var eventData;
-                event_title = $('#input-field').val();
+                    var eventData;
+                    event_title = $('#input-field').val();
 
-                if (event_title) {
-                    eventData = {
-                    title: event_title,
-                    start: start,
-                    end: end
-                    };
-                    $calendar.fullCalendar('renderEvent', eventData, true); 
-                }
-                $calendar.fullCalendar('unselect');
+                    if (event_title) {
+                        eventData = {
+                            title: event_title,
+                            start: start,
+                            className: 'event-green'
+                        };
+                        $calendar.fullCalendar('renderEvent', eventData, true); 
+                    }
+                    $calendar.fullCalendar('unselect');
                 });
             },
             editable: true,
             eventLimit: true,
-            
-            events: [{
-                title: 'All Day Event',
-                start: new Date(y, m, 1),
-                className: 'event-default'
-                },
-                {
-                title: 'Change',
-                start: new Date(y, m, d - 1, 10, 30),
-                allDay: false,
-                className: 'event-green'
-                },
-                {
-                title: 'Lunch',
-                start: new Date(y, m, d + 7, 12, 0),
-                end: new Date(y, m, d + 7, 14, 0),
-                allDay: false,
-                className: 'event-red'
-                },
-                {
-                title: 'Nud-pro Launch',
-                start: new Date(y, m, d - 2, 12, 0),
-                allDay: true,
-                className: 'event-azure'
-                },
-                {
-                title: 'Birthday Party',
-                start: new Date(y, m, d + 1, 19, 0),
-                end: new Date(y, m, d + 1, 22, 30),
-                allDay: false,
-                className: 'event-azure'
-                },
-                {
-                title: 'Click for Creative Tim',
-                start: new Date(y, m, 21),
-                end: new Date(y, m, 22),
-                url: 'http://www.creative-tim.com/',
-                className: 'event-orange'
-                },
-                {
-                title: 'Click for Google',
-                start: new Date(y, m, 21),
-                end: new Date(y, m, 22),
-                url: 'http://www.creative-tim.com/',
-                className: 'event-orange'
+            events: <?php echo json_encode($events); ?>,
+            eventRender: function (event, element, view) {
+
+                if (event.allDay === 'true') {
+
+                    event.allDay = true;
+
+                } else {
+
+                    event.allDay = false;
+
                 }
-            ]
+
+            },
         });
     });
 </script>

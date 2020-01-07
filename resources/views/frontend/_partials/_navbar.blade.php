@@ -1,5 +1,5 @@
 <div class="header-3">
-    <nav class="navbar navbar-expand-lg fixed-top navbar-transparent bg-primary navbar-absolute">
+    <nav class="navbar navbar-expand-lg bg-primary fixed-top">
         <div class="container">
             <div class="navbar-translate">
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#master-navbar"
@@ -45,6 +45,33 @@
                             {!! set_strong_navigation_active(['contact-us'], __('frontend.contact_us_menu')) !!}
                         </a>
                     </li>
+                    @guest
+                    <li class="nav-item d-sm-none">
+                        <a class="nav-link login-button">
+                            {{ __('frontend.login') }}
+                        </a>
+                    </li>
+                    @else
+                    <li class="nav-item dropdown d-sm-none">
+                        <a href="#" class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" data-toggle="dropdown">
+                            <i class="now-ui-icons users_single-02" aria-hidden="true"></i>&nbsp;&nbsp;{{Auth::user()->name}}
+                            {{-- <img src="{{asset('images/avatars/'.Auth::user()->avatar)}}" class="img-rounded" style="width:25px;height:25px" alt="">&nbsp;&nbsp;{{Auth::user()->name}} --}}
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
+                            <a class="dropdown-header">{{Auth::user()->name}}</a>
+                            <a class="dropdown-item" href="{{route('dashboard.index')}}">
+                                <i class="fas fa-tachometer-alt"></i>&nbsp;&nbsp;{{ __('frontend.dashboard') }}
+                            </a>
+                            <div class="divider"></div>
+                            <a class="dropdown-item" href="{{ route('logout') }}" id="logout-button" style="color:red">
+                                <i class="fas fa-power-off"></i>&nbsp;&nbsp;{{ __('frontend.logout') }}
+                            </a>
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                                @csrf
+                            </form>
+                        </div>
+                    </li>
+                    @endguest
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
                     <li class="nav-item dropdown">
@@ -243,11 +270,11 @@
                 </div>
                 {{-- @if (Route::has('password.request')) --}}
                 <div class="modal-footer" style="color:black">
-                    <a class="btn btn-neutral btn-round btn-lg btn-block forgot-password-button">
+                    <a class="btn btn-neutral btn-round btn-lg btn-block forgot-password-button col-md-5 d-sm-none d-md-block">
                         {{ __('frontend.forgot_password') }}
                     </a>
                     <br>
-                    <a class="btn btn-neutral btn-round btn-lg btn-block register-button">
+                    <a class="btn btn-neutral btn-round btn-lg btn-block register-button col-md-7 d-sm-none d-md-block">
                         {{ __('frontend.dont_has_account') }}
                     </a>
                 </div>
