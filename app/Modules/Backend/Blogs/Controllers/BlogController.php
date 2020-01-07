@@ -478,19 +478,15 @@ class BlogController extends Controller
                 (object) $array_object
             );
 
-            $job = (new BlogCRUDJob($post->id, $array_object, FacadeRequest::method()))->delay(Carbon::now()->addSeconds(30));
-
-            dispatch($job);
-
         } else {
             $cache = cache_push($cache, model_replicate($post, $this->languages, $request) );
 
-            $array = remove_slug_and_convert_model_to_array( model_replicate($post, $this->languages, $request), $this->languages );
-
-            $job = (new BlogCRUDJob($post->id, $array, FacadeRequest::method()))->delay(Carbon::now()->addSeconds(30));
-
-            dispatch($job);
+            $array_object = remove_slug_and_convert_model_to_array( model_replicate($post, $this->languages, $request), $this->languages );
         }
+
+        $job = (new BlogCRUDJob($post->id, $array_object, FacadeRequest::method()))->delay(Carbon::now()->addSeconds(30));
+
+        dispatch($job);
 
         if (Cache::has('_' . Auth::id() . '_blog_data')) {
             Cache::forget('_' . Auth::id() . '_blog_data');
