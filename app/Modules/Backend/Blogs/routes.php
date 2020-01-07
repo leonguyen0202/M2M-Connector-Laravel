@@ -10,7 +10,7 @@ Route::group(
             'uses' => 'BlogController@table'
         ]);
 
-        Route::post('/blog/tinymce/description', [
+        Route::get('/blog/tinymce/description', [
             'as' => 'blogs.tinymce.description',
             'uses' => 'BlogController@ajax_tinyMCE_description'
         ]);

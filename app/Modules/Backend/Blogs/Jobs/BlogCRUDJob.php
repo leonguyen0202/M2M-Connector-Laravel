@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 
 class BlogCRUDJob implements ShouldQueue
 {
@@ -38,10 +39,22 @@ class BlogCRUDJob implements ShouldQueue
      */
     public function handle()
     {
+        $languages = DB::table('localization')->select('locale_name', 'locale_code')->get();
+
         if (strtolower($this->method) == 'post') {
+
             $blog = Blog::create($this->array_data);
+
         } else if (strtolower($this->method) == 'put') {
+
             $blog = Blog::find($this->blog_id)->update($this->array_data);
+
+        } else if (strtolower($this->method) == 'delete') {
+            
+            $blog = Blog::find($this->blog_id);
+
+            $blog->delete();
+            
         }
     }
 }

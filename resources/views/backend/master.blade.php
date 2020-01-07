@@ -15,8 +15,8 @@
 
     @stack('customCSS')
 </head>
-
-<body class="sidebar-mini" {!! render_conditional_class( isset($edit_mode) , render_conditional_class( isset($edit_mode),'onload="getDescription();"','') , '' ) !!}>
+{{-- {!! render_conditional_class( isset($edit_mode) , render_conditional_class( isset($edit_mode),'onload="getDescription();"','') , '' ) !!} --}}
+<body class="sidebar-mini">
     <div class="wrapper ">
         @include('backend._partials._sidebar')
         <div class="main-panel" id="main-panel">

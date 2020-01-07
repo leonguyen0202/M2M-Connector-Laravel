@@ -1,8 +1,9 @@
 <?php
 use App\Modules\Backend\Categories\Models\Category;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 
 if (!function_exists('form_json_convert')) {
     function form_json_convert($field, string $json_key)
@@ -99,5 +100,48 @@ if (!function_exists('form_tags')) {
         $result = rtrim($string, ',');
 
         return $result;
+    }
+}
+
+if (!function_exists('cache_push')) {
+    function cache_push($cache, $model_replicate)
+    {
+        $cache->push($model_replicate);
+
+        return $cache;
+    }
+}
+
+if (!function_exists('remove_slug_and_convert_model_to_array')) {
+    function remove_slug_and_convert_model_to_array($model_replicate, $languages)
+    {
+        $array = $model_replicate->toArray();
+
+        foreach ($languages as $key => $value) {
+            unset($array[$value->locale_code . '_slug']);
+        }
+
+        unset($array['id']);
+
+        return $array;
+    }
+}
+
+if (!function_exists('model_replicate')) {
+    function model_replicate($model, $languages, Request $request)
+    {
+        $replicate = $model;
+
+        foreach ($languages as $key => $value) {
+            $replicate->{$value->locale_code . '_title'} = $request->{$value->locale_code . '_title'};
+            $replicate->{$value->locale_code . '_slug'} = Str::slug($request->{$value->locale_code . '_title'}, '-');
+            $replicate->{$value->locale_code . '_description'} = $request->{$value->locale_code . '_description'};
+        }
+
+        if (isset($request->categories)) {
+            $replicate->categories = form_json_convert($request->categories, 'categories_id');
+        }
+
+        return $replicate;
     }
 }

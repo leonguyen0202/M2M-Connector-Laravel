@@ -163,9 +163,10 @@ class BlogController extends Controller
      */
     public function ajax_tinyMCE_description(Request $request)
     {
-        if (!FacadeRequest::isMethod("POST")) {
+        if (!FacadeRequest::isMethod("GET")) {
             return response()->json(['error' => __('form.not_support_method')]);
         }
+
         $slug = $request->slug;
 
         $selectable_description = array();
@@ -186,7 +187,16 @@ class BlogController extends Controller
             return response()->json(['error' => __('form.data_not_exist')]);
         }
 
-        return response()->json(['data' => $result]);
+        $data = $result->toArray();
+
+        foreach ($data as $key => $value) {
+            if ($value != null) {
+                $data[$key] = html_entity_decode( htmlspecialchars( str_replace(' />', '>', $value) ) );
+            }
+            
+        }
+
+        return response()->json(['data' => (object) $data]);
     }
 
     /**
@@ -196,6 +206,13 @@ class BlogController extends Controller
      */
     public function index()
     {
+        /**
+         * Begin replicate Cache after debug
+         */
+        // Cache::store()->put('_' . Auth::id() . '_blog_data', Auth::user()->has_blogs, Config::get('cache.lifetime'));
+        /**
+         * End replicate Cache after debug
+         */
         if (Cache::has('_' . Auth::id() . '_blog_view')) {
             $blog_view = Cache::get('_' . Auth::id() . '_blog_view');
 
@@ -335,18 +352,6 @@ class BlogController extends Controller
      */
     public function edit($slug)
     {
-        $arr = [
-            'key' => 'value',
-        ];
-
-        if (isset($arr['key2'])) {
-            return "isset";
-        } else {
-            return "no isset";
-        }
-
-        dd($arr);
-
         $post = Blog::query()->where([
             ['author_id', '=', Auth::id()],
         ])
@@ -380,6 +385,13 @@ class BlogController extends Controller
      */
     public function update(Request $request, $slug)
     {
+        /**
+         * Begin debug
+         */
+
+        /**
+         * End debug
+         */
         if (FacadeRequest::ajax() or !$request->isMethod('put')) {
             return Redirect::back()->with('errors', [__('form.not_support_method')]);
         }
@@ -428,16 +440,12 @@ class BlogController extends Controller
                 ])->first();
 
                 if ($check_blog_title) {
-                    return Redirect::back()->with('errors', [ __('form.blog_title_unique') ]);
+                    return Redirect::back()->with('errors', [__('form.blog_title_unique')]);
                 }
             }
         }
 
-        return "HERE";
-
-        $cache_collection = collect([]);
-
-        $array_object = blog_data_cache($request->all(), Auth::id());
+        $cache = $this->remove_cache($slug);
 
         if (isset($request->background_image_file)) {
             Validator::make([$request->background_image_file], [
@@ -452,6 +460,8 @@ class BlogController extends Controller
                 return Redirect::back()->with('errors', $validator->errors()->all());
             }
 
+            $array_object = blog_data_cache($request->all(), Auth::id());
+
             $files = $request->file('background_image_file');
 
             $this->fileName = $this->name . '.' . $files->getClientOriginalExtension();
@@ -459,27 +469,28 @@ class BlogController extends Controller
             Storage::disk('upload')->putFileAs('', $files, $this->fileName);
 
             $array_object['background_image'] = $this->fileName;
-        }
 
-        dd($request->all());
-
-        $job = (new BlogCRUDJob($post->id, $request->all(), FacadeRequest::method()))->delay(Carbon::now()->addSeconds(30));
-
-        dispatch($job);
-
-        $cache = Cache::get('_' . Auth::id() . '_blog_data');
-
-        foreach ($this->languages as $key => $value) {
-            foreach ($cache as $index => $item) {
-                if ($item->{$value->locale_code . '_slug'} == $slug) {
-                    $cache->forget($index);
-                }
+            if (!isset($request->categories) || !isset($array_object['categories'])) {
+                $array_object['categories'] = $post->categories;
             }
-        }
 
-        $cache->push(
-            (object) $array_object
-        );
+            $cache->push(
+                (object) $array_object
+            );
+
+            $job = (new BlogCRUDJob($post->id, $array_object, FacadeRequest::method()))->delay(Carbon::now()->addSeconds(30));
+
+            dispatch($job);
+
+        } else {
+            $cache = cache_push($cache, model_replicate($post, $this->languages, $request) );
+
+            $array = remove_slug_and_convert_model_to_array( model_replicate($post, $this->languages, $request), $this->languages );
+
+            $job = (new BlogCRUDJob($post->id, $array, FacadeRequest::method()))->delay(Carbon::now()->addSeconds(30));
+
+            dispatch($job);
+        }
 
         if (Cache::has('_' . Auth::id() . '_blog_data')) {
             Cache::forget('_' . Auth::id() . '_blog_data');
@@ -487,7 +498,7 @@ class BlogController extends Controller
 
         Cache::store()->put('_' . Auth::id() . '_blog_data', $cache, Config::get('cache.lifetime'));
 
-        return redirect()->route('blogs.index')->with('success', ['Cache updated successfully']);
+        return redirect()->route('blogs.index')->with('success', ['Blog updated successfully']);
     }
 
     /**
@@ -514,6 +525,8 @@ class BlogController extends Controller
             return response()->json(['error' => __('form.data_not_exist')]);
         }
 
+        $cache = $this->remove_cache($slug);
+
         if (!($post->getMedia('blog-images'))->isEmpty()) {
             $post->clearMediaCollection('blog-images');
         }
@@ -521,9 +534,13 @@ class BlogController extends Controller
         $post->delete();
 
         return response()->json(['success' => 'Data is deleted successfully!']);
+
+        $job = (new BlogCRUDJob($post->id, null, FacadeRequest::method()))->delay(Carbon::now()->addSeconds(rand(5,20)));
+
+        dispatch($job);
     }
-    
-    protected function remove_cache($array_object)
+
+    protected function remove_cache($slug)
     {
         $cache = Cache::get('_' . Auth::id() . '_blog_data');
 
@@ -535,14 +552,6 @@ class BlogController extends Controller
             }
         }
 
-        $cache->push(
-            (object) $array_object
-        );
-
-        if (Cache::has('_' . Auth::id() . '_blog_data')) {
-            Cache::forget('_' . Auth::id() . '_blog_data');
-        }
-
-        Cache::store()->put('_' . Auth::id() . '_blog_data', $cache, Config::get('cache.lifetime'));
+        return $cache;
     }
 }

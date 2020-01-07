@@ -194,36 +194,67 @@
 
 @if ($edit_mode)
 <script type="text/javascript">
-    function getDescription() {
-        var slug = $('input[name=_slug]').val();
-        $.ajax({
-            url: '/dashboard/blog/tinymce/description',
-            method: "POST",
-            dataType: 'json',
-            data: {
-                slug:slug,
-                '_token': $('input[name=_token]').val(),
-            },
-            success: (data) => {
-                if (data.error) {
-                    Swal.fire({
-                        type: 'error',
-                        title: data.error,
-                        showConfirmButton: false,
-                        timer: 1000,
-                    });
-                } else {
-                    $.each(data.data, function (k,v) {
-                        if (v != null) {
-                            tinymce.get(k).setContent(v);   
-                        }
-                    });
-                };
-            },
-            error: (jqXHR, textStatus, errorThrown) => {
-                formatErrorMessage(jqXHR, errorThrown)
-            },
+    var slug = $('input[name=_slug]').val();
+    $.ajax({
+        url: '/dashboard/blog/tinymce/description',
+        method: "GET",
+        dataType: 'json',
+        data: {
+            slug:slug,
+        },
+        success: (data) => {
+            if (data.error) {
+                Swal.fire({
+                    type: 'error',
+                    title: data.error,
+                    showConfirmButton: false,
+                    timer: 1000,
+                });
+            } else {
+                $.each(data.data, function (k,v) {
+                    if (v != null) {
+                        tinymce.get(k).setContent(v);
+                    };
+                });
+            };
+        },
+        error: (jqXHR, textStatus, errorThrown) => {
+            formatErrorMessage(jqXHR, errorThrown);
+        },
+    });
+
+    function sweetAlertError(message) {
+        Swal.fire({
+            type: 'error',
+            title: message,
+            showConfirmButton: false,
+            timer: 1000
         });
+    };
+
+    function formatErrorMessage(jqXHR, exception) {
+        if (jqXHR.status === 0) {
+            sweetAlertError('Not connected.\nPlease verify your network connection.');
+        } else if (jqXHR.status == 404) {
+            sweetAlertError('The request not found.');
+        } else if (jqXHR.status == 401) {
+            Swal.fire({
+                type: 'error',
+                title: 'Sorry!! You session has expired. Please login to continue access.',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        } else if (jqXHR.status == 500) {
+            sweetAlertError('Internal Server Error.');
+        } else if (exception === 'parsererror') {
+            sweetAlertError('Requested JSON parse failed.');
+        } else if (exception === 'timeout') {
+            sweetAlertError('Time out error.');
+        } else if (exception === 'abort') {
+            sweetAlertError('Ajax request aborted.');
+        } else {
+            sweetAlertError('Unknown error occured. Please try again.');
+        };
     };
 </script>
 @endif
