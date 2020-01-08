@@ -48,7 +48,7 @@ class BlogController extends Controller
             }
         }
 
-        $posts = Blog::query()->whereNotIn('id', $post_array_id)->orderBy('created_at', 'DESC')->first();
+        $posts = Blog::query()->whereNotIn('id', $post_array_id)->orderBy('created_at', 'DESC')->get();
 
         $events = Event::query()->orderBy('created_at', 'DESC')->limit(5)->get();
 

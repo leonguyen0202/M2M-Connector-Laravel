@@ -9,10 +9,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
 use Webpatser\Uuid\Uuid;
 use Illuminate\Support\Facades\DB;
+use Spatie\MediaLibrary\HasMedia\HasMedia;
+use Spatie\MediaLibrary\HasMedia\HasMediaTrait;
+use Spatie\MediaLibrary\Models\Media;
 
-class Event extends Model
+class Event extends Model implements HasMedia
 {
-    use Sluggable;
+    use HasMediaTrait, Sluggable;
 
     public $incrementing = false;
 
@@ -25,7 +28,33 @@ class Event extends Model
      */
     protected $table = 'events';
 
-    // protected $fillable = ['title', 'description', 'qr_code', 'promotion', 'categories', 'author', 'participants', 'event_date'];
+    /**
+     * Define Collection Name
+     */
+    protected $media_collection_name = 'event-images';
+
+    /**
+     * Defining new media collection
+     *
+     * @var null
+     */
+    public function registerMediaCollections()
+    {
+        $this->addMediaCollection($this->media_collection_name)
+            ->registerMediaConversions(function (Media $media) {
+                $this->addMediaConversion('card')
+                    ->width(350)
+                    ->height(250);
+
+                $this->addMediaConversion('slider')
+                    ->width(1440)
+                    ->height(960);
+
+                $this->addMediaConversion('thumb')
+                    ->width(50)
+                    ->height(50);
+            });
+    }
     /**
      * The attributes that are mass assignable.
      *
@@ -118,5 +147,20 @@ class Event extends Model
     public function author()
     {
         return $this->belongsTo(User::class, 'author_id');
+    }
+
+    public function media()
+    {
+        return $this->morphMany(Media::class, 'model');
+    }
+
+    public function media_url($conversions)
+    {
+        return $this->getFirstMediaUrl($this->media_collection_name, $conversions);
+    }
+
+    public function add_media_from_disk($name, $fileName)
+    {
+        return $this->addMediaFromDisk($fileName, $this->get_disk_for_media())->usingName($name)->usingFileName($fileName)->toMediaCollection($this->media_collection_name);
     }
 }

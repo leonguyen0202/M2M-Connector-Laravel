@@ -5,6 +5,6 @@
 
 <script src="{{asset('js/core/main.min.js')}}" type="text/javascript"></script>
 
-<script src="{{asset('js/core/utilities.min.js')}}" type="text/javascript"></script>
-
 <script src="{{asset('js/mix.js')}}"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>

@@ -1,3 +1,7 @@
+$(document).ready(function () {
+    
+});
+
 $(document).on('click', '.blog-comments', function (e) {
     e.preventDefault();
     Swal.fire({

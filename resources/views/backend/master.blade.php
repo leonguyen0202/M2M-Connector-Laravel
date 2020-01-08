@@ -10,13 +10,13 @@
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no'
         name='viewport' />
     @stack('meta')
-
+    
     @include('backend._partials._css')
 
     @stack('customCSS')
 </head>
 {{-- {!! render_conditional_class( isset($edit_mode) , render_conditional_class( isset($edit_mode),'onload="getDescription();"','') , '' ) !!} --}}
-<body class="sidebar-mini">
+<body class="">
     <div class="wrapper ">
         @include('backend._partials._sidebar')
         <div class="main-panel" id="main-panel">
@@ -30,6 +30,8 @@
     @include('backend._partials._javascript')
     
     @stack('customJS')
+
+    <script src="{{asset('dashboard/demo/demo.js')}}"></script>
 
     @if (session('errors'))
     @foreach (session('errors') as $error)

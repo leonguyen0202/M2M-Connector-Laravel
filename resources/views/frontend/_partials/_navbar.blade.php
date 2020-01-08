@@ -14,7 +14,7 @@
             </div>
             <div class="collapse navbar-collapse" id="master-navbar">
                 <ul class="navbar-nav mx-auto">
-                    <li class="nav-item {{ set_request_class(['/'],'active') }}">
+                    <li class="nav-item {{ set_request_class(['/', 'chatbot/*'],'active') }}">
                         <a class="nav-link" href="{{route('home.index')}}">
                             {!! set_strong_navigation_active(['/'], __('frontend.home_menu')) !!}
                         </a>
@@ -45,33 +45,6 @@
                             {!! set_strong_navigation_active(['contact-us'], __('frontend.contact_us_menu')) !!}
                         </a>
                     </li>
-                    @guest
-                    <li class="nav-item d-sm-none">
-                        <a class="nav-link login-button">
-                            {{ __('frontend.login') }}
-                        </a>
-                    </li>
-                    @else
-                    <li class="nav-item dropdown d-sm-none">
-                        <a href="#" class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" data-toggle="dropdown">
-                            <i class="now-ui-icons users_single-02" aria-hidden="true"></i>&nbsp;&nbsp;{{Auth::user()->name}}
-                            {{-- <img src="{{asset('images/avatars/'.Auth::user()->avatar)}}" class="img-rounded" style="width:25px;height:25px" alt="">&nbsp;&nbsp;{{Auth::user()->name}} --}}
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
-                            <a class="dropdown-header">{{Auth::user()->name}}</a>
-                            <a class="dropdown-item" href="{{route('dashboard.index')}}">
-                                <i class="fas fa-tachometer-alt"></i>&nbsp;&nbsp;{{ __('frontend.dashboard') }}
-                            </a>
-                            <div class="divider"></div>
-                            <a class="dropdown-item" href="{{ route('logout') }}" id="logout-button" style="color:red">
-                                <i class="fas fa-power-off"></i>&nbsp;&nbsp;{{ __('frontend.logout') }}
-                            </a>
-                            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                                @csrf
-                            </form>
-                        </div>
-                    </li>
-                    @endguest
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
                     <li class="nav-item dropdown">

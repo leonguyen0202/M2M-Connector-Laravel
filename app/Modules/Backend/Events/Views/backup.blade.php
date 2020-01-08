@@ -56,27 +56,28 @@ events->className: color classes: [ event-blue | event-azure | event-green | eve
 
             select: function(start, end) {
                 Swal.fire({
-                title: 'Create an Event',
-                html: '<div class="form-group">' +
-                    '<input class="form-control" placeholder="Event Title" id="input-field">' +
-                    '</div>',
-                showCancelButton: true,
-                confirmButtonClass: 'btn btn-success',
-                cancelButtonClass: 'btn btn-danger',
-                buttonsStyling: false
+                    title: 'Create an Event',
+                    html: '<div class="form-group">' +
+                        '<input class="form-control" placeholder="Event Title" id="input-field">' +
+                        '</div>',
+                    showCancelButton: true,
+                    confirmButtonClass: 'btn btn-success',
+                    cancelButtonClass: 'btn btn-danger',
+                    buttonsStyling: false
                 }).then((result) => {
-                var eventData;
-                event_title = $('#input-field').val();
+                    var eventData;
+                    event_title = $('#input-field').val();
 
-                if (event_title) {
-                    eventData = {
-                    title: event_title,
-                    start: start,
-                    end: end
-                    };
-                    $calendar.fullCalendar('renderEvent', eventData, true); 
-                }
-                $calendar.fullCalendar('unselect');
+                    if (event_title) {
+                        eventData = {
+                            title: event_title,
+                            start: start,
+                            end:end,
+                            className: 'event-green'
+                        };
+                        $calendar.fullCalendar('renderEvent', eventData, true); 
+                    }
+                    $calendar.fullCalendar('unselect');
                 });
             },
             editable: true,

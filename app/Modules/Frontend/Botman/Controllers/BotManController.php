@@ -31,6 +31,8 @@ use App\Modules\Backend\Events\Models\Event;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Cookie;
 
 // use Illuminate\Support\Facades\Request;
 // use Illuminate\Support\Facades\Auth;
@@ -71,18 +73,23 @@ class BotManController extends Controller
         ->callbackId('yes')
         ->addButtons($botman_button);
 
-        $botman->ask($question, function (Answer $answer)
-        {
-            $selectedValue = $answer->getText();
+        // $botman->ask($question, function (Answer $answer)
+        // {
+        //     $selectedValue = $answer->getText();
 
-            $botman->reply($selectedValue);
-        });
+        //     $botman->reply($selectedValue);
+        // });
 
         $botman->hears('{message}', function ($botman, $message) {
 
-            $keyword = implode("-", preg_split('/[-\s,_"?%&]+/', $message));
+            if ( strtolower($message) == 'hi' || strtolower($message) == 'hello') {
+                $botman->reply("Hello there");
+                $botman->reply("What do you want me to do?");
+            } else {
+                $keyword = implode("-", preg_split('/[-\s,_"?%&]+/', $message));
 
-            $botman->reply("<a href='" . env('APP_URL') . "/chatbot/filter/keyword=" . strtolower($keyword) . "&&language_code=en' target='_blank'>Result list</a>");
+                $botman->reply("<a href='" . env('APP_URL') . "/chatbot/filter/keyword=" . strtolower($keyword) . "&&language_code=en' target='_blank'>Result list</a>");
+            }
         });
 
         $botman->listen();
@@ -97,6 +104,73 @@ class BotManController extends Controller
         if ($url[0] != 'botman') {
             return redirect()->route('home.index');
         }
+
+        $blog_id = array();
+
+        $search_keyword_array = explode("-", $keyword);
+
+        $categories_records = Category::all();
+
+        $category_keyword = array();
+
+        for ($i=0; $i < count($search_keyword_array); $i++) { 
+            
+            foreach ($categories_records as $value) {
+
+                $params['title'] = explode(" ", $value->title);
+
+                for ($k = 0; $k < count($params['title']); $k++) {
+
+                    if (strtolower($search_keyword_array[$i]) == strtolower($params['title'][$k])) {
+
+                        array_push($category_keyword, $params['title'][$k]);
+
+                    }
+                }
+            }
+
+            if (is_numeric($search_keyword_array[$i])) {
+                $params['limit'] = $search_keyword_array[$i];
+            }
+
+            $blog = Blog::query()->where([
+                [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_title'), '=', $search_keyword_array[$i]],
+            ])->orWhere([
+                [(Config::get('app.fallback_locale') . '_title'), '=', $search_keyword_array[$i]],
+            ])->get();
+
+            if (!$blog->isEmpty()) {
+                foreach ($blog as $key => $value) {
+                    array_push($blog_id, $value->id);
+                }
+            }
+        }
+
+        $categories = Category::query()->whereIn('title', $category_keyword)->get();
+
+        foreach ($categories as $key => $value) {
+            $blog = Blog::query()->whereJsonContains('categories->categories_id', $value->id)->get();
+
+            foreach ($blog as $index => $item) {
+                array_push($blog_id, $item->id);
+            }
+        }
+
+        if (isset($params['limit'])) {
+            $blog_results = Blog::query()->whereIn('id', array_unique($blog_id) )->limit($params['limit'])->get();
+        } else {
+            $blog_results = Blog::query()->whereIn('id', array_unique($blog_id))->get();
+        }
+
+        $results = collect([]);
+
+        foreach ($blog_results as $key => $value) {
+            $results->push($value);
+        }
+
+        return view('Botman::index')->with([
+            'results' => $results
+        ]);
 
         $search_keyword_array = explode("-", $keyword);
 

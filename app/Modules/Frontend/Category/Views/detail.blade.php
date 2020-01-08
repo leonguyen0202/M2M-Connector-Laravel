@@ -34,7 +34,7 @@ blog-post
                 <div class="button-container">
                     @guest
                     <a href="#" class="btn btn-primary btn-round btn-lg notifications-button">
-                        <i class="far fa-bell"></i> Register notification
+                        <i class="far fa-bell"></i> Subscribe
                     </a>
                     @else
                     <a href="#pablo" class="btn {!! render_conditional_class($is_subscribed, 'btn-success', 'btn-primary') !!} btn-round btn-lg notifications-button">

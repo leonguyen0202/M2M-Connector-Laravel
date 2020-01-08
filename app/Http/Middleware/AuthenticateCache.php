@@ -51,9 +51,10 @@ class AuthenticateCache
 
                 foreach ($data as $key => $value) {
                     array_push($results, [
-                        'title' => $value->en_title,
-                        'start' => Carbon::parse($value->event_date)->toDateString(),
-                        'className' => 'event-green',
+                        "title" => $value->{Config::get('app.fallback_locale').'_title'},
+                        "start" => Carbon::parse($value->event_date)->toDateString(),
+                        "className" => 'event-green',
+                        "editable" => false,
                     ]);
                 }
 
@@ -61,9 +62,9 @@ class AuthenticateCache
 
                 foreach ($data as $key => $value) {
                     array_push($results, [
-                        'title' => $value->en_title,
-                        'start' => Carbon::parse($value->event_date)->toDateString(),
-                        'className' => 'event-azure',
+                        "title" => $value->{Config::get('app.fallback_locale').'_title'},
+                        "start" => Carbon::parse($value->event_date)->toDateString(),
+                        "className" => 'event-green',
                     ]);
                 }
 

@@ -30,27 +30,44 @@ class EventController extends Controller
      */
     protected function render_event()
     {
-        $selectable_description = array();
+        // if (Cache::has('_' . Auth::id() . '_full_calendar_event')) {
+        //     $events = Cache::get('_' . Auth::id() . '_full_calendar_event');
+        // } else {
+            $events = array();
 
-        foreach ($this->languages as $key => $value) {
-            array_push($selectable_description, $value->locale_code . '_title');
-        }
+            $selectable_description = array();
 
-        array_push($selectable_description, 'event_date');
+            foreach ($this->languages as $key => $value) {
+                array_push($selectable_description, $value->locale_code . '_title');
+            }
 
-        $events = array();
+            $data = Event::query()->where([
+                ['author_id', '!=', Auth::id()],
+                ['is_completed', '=', '0'],
+                ['event_date', '>', Carbon::now()->toDateTimeString()],
+            ])->orderBy('event_date', 'ASC')->get($selectable_description);
 
-        $data = Auth::user()->has_events;
+            foreach ($data as $key => $value) {
+                array_push($events, [
+                    "title" => $value->en_title,
+                    "start" => Carbon::parse($value->event_date)->toDateString(),
+                    "className" => 'event-green',
+                    "editable" => false,
+                ]);
+            }
 
-        foreach ($data as $key => $value) {
-            array_push($events, [
-                'title' => $value->en_title,
-                'start' => Carbon::parse($value->event_date)->toDateString(),
-                'className' => 'event-green',
-            ]);
-        }
+            $data = Auth::user()->has_events;
 
-        return $events;
+            foreach ($data as $key => $value) {
+                array_push($events, [
+                    "title" => $value->en_title,
+                    "start" => Carbon::parse($value->event_date)->toDateString(),
+                    "className" => 'event-azure',
+                ]);
+            }
+        // }
+
+        return response()->json($events);
     }
 
     /**
@@ -64,14 +81,6 @@ class EventController extends Controller
          * End debug
          */
 
-        if (Cache::has('_' . Auth::id() . '_full_calendar_event')) {
-            $events = Cache::get('_' . Auth::id() . '_full_calendar_event');
-        } else {
-            $events = $this->render_event();
-        }
-
-        return view('Events::index')->with([
-            'events' => $events,
-        ]);
+        return view('Events::index');
     }
 }

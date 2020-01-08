@@ -22,7 +22,7 @@
 
                 @if ($item instanceof \App\Modules\Backend\Blogs\Models\Blog)
                 <div class="page-header-image"
-                    style="background-image: url({{ $value->media_url('slider') }});">
+                    style="background-image: url({{ $item->media_url('slider') }});">
                 </div>
                 @elseif($item instanceof \App\Modules\Backend\Events\Models\Event)
                 <div class="page-header-image"
@@ -159,7 +159,7 @@ sections-page
             @foreach ($top_posts as $top)
             <div class="col-md-6">
                 <div class="card card-background"
-                    style="background-image: url( {{ $value->media_url('card') }} )">
+                    style="background-image: url( {{ $top->media_url('card') }} )">
                     <div class="card-body">
                         <div class="card-title text-left title">
                             @if ($top->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} != null)

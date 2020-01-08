@@ -163,7 +163,7 @@ class BlogController extends Controller
      */
     public function ajax_tinyMCE_description(Request $request)
     {
-        if (!FacadeRequest::isMethod("GET")) {
+        if (!FacadeRequest::isMethod("POST")) {
             return response()->json(['error' => __('form.not_support_method')]);
         }
 
@@ -207,11 +207,7 @@ class BlogController extends Controller
     public function index()
     {
         /**
-         * Begin replicate Cache after debug
-         */
-        // Cache::store()->put('_' . Auth::id() . '_blog_data', Auth::user()->has_blogs, Config::get('cache.lifetime'));
-        /**
-         * End replicate Cache after debug
+         * End debug
          */
         if (Cache::has('_' . Auth::id() . '_blog_view')) {
             $blog_view = Cache::get('_' . Auth::id() . '_blog_view');

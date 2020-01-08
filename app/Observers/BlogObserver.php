@@ -3,10 +3,13 @@
 namespace App\Observers;
 
 use App\Modules\Backend\Blogs\Models\Blog;
+use App\Modules\Backend\Categories\Models\Category;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use App\User;
+use Carbon\Carbon;
+use App\Jobs\DatabaseCacheJob;
 
 class BlogObserver
 {
@@ -22,6 +25,14 @@ class BlogObserver
             $name = explode(".", $blog->background_image);
 
             $blog->add_media_from_disk($name[0], $blog->background_image);
+        }
+
+        foreach (($blog->categories)['categories_id'] as $key => $value) {
+            $category = Category::find($value);
+
+            $job = (new DatabaseCacheJob($category))->delay(Carbon::now()->addSeconds(20));
+
+            dispatch($job);
         }
 
         $user = $blog->author;
@@ -49,6 +60,15 @@ class BlogObserver
 
             $blog->add_media_from_disk($name[0], $blog->background_image);
         }
+
+        foreach (($blog->categories)['categories_id'] as $key => $value) {
+            $category = Category::find($value);
+
+            $job = (new DatabaseCacheJob($category))->delay(Carbon::now()->addSeconds(20));
+
+            dispatch($job);
+        }
+
         $user = $blog->author;
 
         if (Cache::has('_'. $user->id . '_blog_data')) {

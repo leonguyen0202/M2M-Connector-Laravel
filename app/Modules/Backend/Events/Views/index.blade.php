@@ -14,9 +14,7 @@
             You can now view or create new event via our calendar
         </p>
         &nbsp;
-        <a href="#" class="btn btn-success test-button">
-            <i class="now-ui-icons ui-1_simple-add"></i>&nbsp;Test
-        </a>
+        @csrf
     </div>
 </div>
 <div class="content">
@@ -24,7 +22,9 @@
         <div class="col-md-10 ml-auto mr-auto">
             <div class="card card-calendar">
                 <div class="card-body ">
-                    <div id="calendar"></div>
+                    <div id="calendar">
+
+                    </div>
                 </div>
             </div>
         </div>
@@ -36,35 +36,8 @@
 
 @push('customJS')
 <script type="text/javascript">
-    $(document).on('click', '.test-button', function (e) {
-        e.preventDefault();
-
-        $.ajax({
-            url: '/dashboard/events/render_event',
-            method: 'GET',
-            success: (data) => {
-                var eventData;
-
-                $.each(data, function (k,v) {
-                    eventData = {
-                        title: v.en_title,
-                        start: v.event_date,
-                        className: 'event-green'
-                    };
-                    $calendar.fullCalendar('renderEvent', eventData, true); 
-                });
-
-                $calendar.fullCalendar('unselect');
-            },
-            error: (jqXHR, textStatus, errorThrown) => {
-                console.log(jqXHR);
-                console.log(textStatus);
-                console.log(errorThrown);
-            },
-        });
-    });
-
     $(document).ready(function() {
+        
         $calendar = $('#calendar');
 
         today = new Date();
@@ -75,9 +48,6 @@
         $calendar.fullCalendar({
             viewRender: function(view, element) {
                 
-                if (view.name != 'month') {
-                    $(element).find('.fc-scroller').perfectScrollbar();
-                }
             },
             header: {
                 left: 'title',
@@ -100,33 +70,86 @@
             },
 
             select: function(start, end) {
-                Swal.fire({
-                title: 'Create an Event',
-                html: '<div class="form-group">' +
-                    '<input class="form-control" placeholder="Event Title" id="input-field">' +
-                    '</div>',
-                showCancelButton: true,
-                confirmButtonClass: 'btn btn-success',
-                cancelButtonClass: 'btn btn-danger',
-                buttonsStyling: false
-                }).then((result) => {
-                    var eventData;
-                    event_title = $('#input-field').val();
+                Swal.mixin({
+                    confirmButtonText: 'Next &rarr;',
+                    showCancelButton: true,
+                    confirmButtonClass: 'btn btn-success',
+                    cancelButtonClass: 'btn btn-danger',
+                    buttonsStyling: false,
+                    progressSteps: ['1', '2'],
+                }).queue([
+                    {
+                        title: 'Choose calendar display type',
+                        input: 'select',
+                        inputOptions: {
+                            member: 'Team member',
+                            event: 'Events',
+                        },
+                        inputPlaceholder: 'Choose one option',
+                        inputValidator: (value) => {
+                            return new Promise((resolve) => {
+                                if (!value) {
+                                    resolve('You need to select one option :)')
+                                } else {
+                                    type = value;
 
-                    if (event_title) {
-                        eventData = {
-                            title: event_title,
-                            start: start,
-                            className: 'event-green'
-                        };
-                        $calendar.fullCalendar('renderEvent', eventData, true); 
-                    }
-                    $calendar.fullCalendar('unselect');
+                                    resolve()
+                                }
+                            })
+                        }
+                    },
+                    {
+                        title: 'Create an title',
+                        input: 'text',
+                        inputPlaceholder: 'Provide us a title to post on calendar',
+                        showCancelButton: true,
+                        confirmButtonClass: 'btn btn-success',
+                        cancelButtonClass: 'btn btn-danger',
+                        buttonsStyling: false,
+                        inputValidator: (value) => {
+                            return new Promise((resolve) => {
+                                if (!value) {
+                                    resolve('You need to provide us a title!')
+                                } else {
+                                    type = value;
+
+                                    resolve()
+                                }
+                            })
+                        },
+                        inputValidator: (value) => {
+                            if (!value) {
+                                return 'You need to provide us a title!'
+                            }
+                        }
+                    },
+                ]).then((result) => {
+                    if (result.value) {
+                        console.log(start.format());
+                        console.log(end.format());
+
+                        if (result.value[1]) {
+                            eventData = {
+                                title: result.value[1],
+                                start: start,
+                                end:end,
+                                className: 'event-azure'
+                            };
+                            $calendar.fullCalendar('renderEvent', eventData, true); 
+                        }
+                        $calendar.fullCalendar('unselect');
+                    };
                 });
             },
             editable: true,
             eventLimit: true,
-            events: <?php echo json_encode($events); ?>,
+            events: {
+                url: '/dashboard/events/render_event',
+                method: 'POST',
+                data: {
+                    '_token': $('input[name=_token]').val()
+                }
+            },
             eventRender: function (event, element, view) {
 
                 if (event.allDay === 'true') {

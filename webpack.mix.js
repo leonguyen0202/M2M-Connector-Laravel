@@ -53,6 +53,7 @@ mix.js('resources/js/app.js', 'public/js')
          */
         'public/dashboard/js/core/bootstrap.min.js',
         'public/dashboard/js/plugins/moment.min.js',
+        'public/dashboard/js/core/popper.min.js',
         'public/dashboard/js/plugins/perfect-scrollbar.jquery.min.js',
         /**
          * End core
@@ -63,4 +64,19 @@ mix.js('resources/js/app.js', 'public/js')
         // 'public/dashboard/demo/demo.js',
         'public/dashboard/js/now-ui-dashboard.min.js',
         'public/dashboard/js/plugins/jquery.dataTables.min.js',
+
+        'public/dashboard/js/plugins/sweetalert2.min.js',
+        'public/dashboard/js/plugins/bootstrap-notify.js',
+        'public/dashboard/js/plugins/bootstrap-switch.js',
+        'public/dashboard/js/plugins/bootstrap-tagsinput.js',
+        'public/dashboard/js/plugins/jasny-bootstrap.min.js',
+        'public/dashboard/js/plugins/jquery.bootstrap-wizard.js',
+        'public/dashboard/js/plugins/bootstrap-selectpicker.js',
+        'public/dashboard/js/plugins/bootstrap-datetimepicker.min.js',
+
+        'public/dashboard/js/plugins/chartjs.min.js',
+        'public/dashboard/js/plugins/nouislider.min.js',
+        'public/dashboard/js/plugins/jquery-jvectormap.js',
+        'public/dashboard/js/plugins/fullcalendar.min.js',
+        'public/dashboard/js/plugins/jquery.validate.min.js',
     ], 'public/js/core/main.min.js');

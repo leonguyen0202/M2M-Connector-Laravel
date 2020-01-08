@@ -16,9 +16,9 @@ blog-post
 {{-- <meta name="description" content="{{ split_sentence($blog->description, 250, '...') }}"> --}}
 <title>
     @if ( $blog->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'} != null )
-        {{$blog->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'} }} - M2M Connector
+    {{$blog->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'} }} - M2M Connector
     @else
-        {{ __('frontend.no_language_detect') }}
+    {{ __('frontend.no_language_detect') }}
     @endif
 </title>
 @endpush
@@ -36,9 +36,9 @@ blog-post
             <div class="col-md-8 ml-auto mr-auto text-center">
                 <h2 class="title">
                     @if ($blog->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'} == null)
-                        {{ $blog->{ Config::get('app.fallback_locale').'_title' } }}
+                    {{ $blog->{ Config::get('app.fallback_locale').'_title' } }}
                     @else
-                        {{ $blog->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'} }}
+                    {{ $blog->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'} }}
                     @endif
                 </h2>
                 <h4>
@@ -65,8 +65,11 @@ blog-post
                     </a>
                     @else
                     @if (Auth::id() != $blog->author_id)
-                    <a href="#pablo" class="btn {!! render_conditional_class($is_bookmarked, 'btn-success', 'btn-primary') !!} btn-round btn-lg bookmark-button" id="bookmark-button">
-                        <i class="{!! render_conditional_class($is_bookmarked, 'fas', 'far') !!} fa-bookmark"></i> Bookmark Post
+                    <a href="#pablo"
+                        class="btn {!! render_conditional_class($is_bookmarked, 'btn-success', 'btn-primary') !!} btn-round btn-lg bookmark-button"
+                        id="bookmark-button">
+                        <i class="{!! render_conditional_class($is_bookmarked, 'fas', 'far') !!} fa-bookmark"></i>
+                        Bookmark Post
                     </a>
                     @endif
 
@@ -93,12 +96,13 @@ blog-post
     <div class="section">
         <div class="container">
             <div class="row">
-                <div class="col-md-8 ml-auto mr-auto {!! render_conditional_class($blog->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'} == null, 'text-center', '') !!}">
+                <div
+                    class="col-md-8 ml-auto mr-auto {!! render_conditional_class($blog->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'} == null, 'text-center', '') !!}">
                     <br>
                     @if ($blog->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'} == null)
-                        <h3>{{ __('frontend.no_language_detect') }}</h3>
-                        <br>
-                        <a href="#" class="btn btn-primary request-language">{{__('frontend.language_request')}}</a>
+                    <h3>{{ __('frontend.no_language_detect') }}</h3>
+                    <br>
+                    <a href="#" class="btn btn-primary request-language">{{__('frontend.language_request')}}</a>
                     @else
                     {!! $blog->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'} !!}
                     @endif
@@ -116,14 +120,14 @@ blog-post
                             <div class="blog-tags">
                                 Categories:
                                 @foreach (($blog->categories) as $key => $value)
-                                    @foreach ($value as $item)
-                                        <span class="label label-primary" style="text-decoration: none;">
-                                            <a href="{{route('category.detail', render_all_categories('slug', $item))}}"
-                                                style="text-decoration: none;" onMouseOut="this.style.color='red'"
-                                                onMouseOver="this.style.color='{{ render_all_categories('color', $item) }}'">{{render_all_categories('title', $item)}}</a>
-                                        </span>
-                                        &nbsp;
-                                    @endforeach
+                                @foreach ($value as $item)
+                                <span class="label label-primary" style="text-decoration: none;">
+                                    <a href="{{route('category.detail', render_all_categories('slug', $item))}}"
+                                        style="text-decoration: none;" onMouseOut="this.style.color='red'"
+                                        onMouseOver="this.style.color='{{ render_all_categories('color', $item) }}'">{{render_all_categories('title', $item)}}</a>
+                                </span>
+                                &nbsp;
+                                @endforeach
                                 @endforeach
                             </div>
                         </div>
@@ -145,23 +149,23 @@ blog-post
                                 <p class="description">{{$blog->author->about}}</p>
                             </div>
                             @guest
-                                <div class="col-md-2">
-                                    <button type="button"
-                                        class="btn btn-default pull-right btn-round follow-button">Follow</button>
-                                </div>
+                            <div class="col-md-2">
+                                <button type="button"
+                                    class="btn btn-default pull-right btn-round follow-button">Follow</button>
+                            </div>
                             @else
-                                @if (Auth::id() != $blog->author_id)
-                                    <div class="col-md-2">
-                                        <button type="button"
-                                            class="btn {!! render_conditional_class($is_followed, 'btn-success', 'btn-default') !!} pull-right btn-round follow-button">Follow</button>
-                                    </div>
-                                    <form id="follow-form" action="{{ route('home.action') }}" method="POST"
-                                        style="display: none;">
-                                        @csrf
-                                        <input type="hidden" name="email" id="email" value="{{Auth::user()->email}}">
-                                        <input type="hidden" name="type" id="type" value="users">
-                                    </form>
-                                @endif
+                            @if (Auth::id() != $blog->author_id)
+                            <div class="col-md-2">
+                                <button type="button"
+                                    class="btn {!! render_conditional_class($is_followed, 'btn-success', 'btn-default') !!} pull-right btn-round follow-button">Follow</button>
+                            </div>
+                            <form id="follow-form" action="{{ route('home.action') }}" method="POST"
+                                style="display: none;">
+                                @csrf
+                                <input type="hidden" name="email" id="email" value="{{Auth::user()->email}}">
+                                <input type="hidden" name="type" id="type" value="users">
+                            </form>
+                            @endif
                             @endguest
                         </div>
                     </div>
@@ -184,29 +188,33 @@ blog-post
                                 @if ($key == 0)
                                 <div class="col-md-5">
                                     <div class="card-image">
-                                        <img class="img img-raised rounded"
-                                            src="{{ $value->media_url('card') }}">
+                                        <img class="img img-raised rounded" src="{{ $value->media_url('card') }}">
                                     </div>
                                 </div>
                                 <div class="col-md-7">
                                     {!! render_category_class('h6', $value) !!}
 
                                     <h3 class="card-title">
-                                        @if ($value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} == null)
-                                            <a href="{{route('blog.detail', $value->{ Config::get('app.fallback_locale').'_slug' } )}}">
-                                                {{ $value->{ Config::get('app.fallback_locale').'_title' } }}
-                                            </a>
+                                        @if ($value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} ==
+                                        null)
+                                        <a
+                                            href="{{route('blog.detail', $value->{ Config::get('app.fallback_locale').'_slug' } )}}">
+                                            {{ $value->{ Config::get('app.fallback_locale').'_title' } }}
+                                        </a>
                                         @else
-                                            <a href="{{route('blog.detail', $value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} )}}">
-                                                {{ $value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'} }}
-                                            </a>
+                                        <a
+                                            href="{{route('blog.detail', $value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} )}}">
+                                            {{ $value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'} }}
+                                        </a>
                                         @endif
                                     </h3>
                                     <p class="card-description">
-                                        @if ($value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'} == null)
-                                            {{ __('frontend.no_language_detect') }}
+                                        @if ($value->{Cookie::get( strtolower(env('APP_NAME')).'_language'
+                                        ).'_description'} == null)
+                                        {{ __('frontend.no_language_detect') }}
                                         @else
-                                            {!! split_sentence( strip_tags($value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'}) , 170, '...') !!}
+                                        {!! split_sentence( strip_tags($value->{Cookie::get(
+                                        strtolower(env('APP_NAME')).'_language' ).'_description'}) , 170, '...') !!}
                                         @endif
                                     </p>
                                     <p class="author">
@@ -221,21 +229,26 @@ blog-post
                                 <div class="col-md-7">
                                     {!! render_category_class( 'h6',$value) !!}
                                     <h3 class="card-title">
-                                        @if ($value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} == null)
-                                            <a href="{{route('blog.detail', $value->{ Config::get('app.fallback_locale').'_slug' } )}}">
-                                                {{ $value->{ Config::get('app.fallback_locale').'_title' } }}
-                                            </a>
+                                        @if ($value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} ==
+                                        null)
+                                        <a
+                                            href="{{route('blog.detail', $value->{ Config::get('app.fallback_locale').'_slug' } )}}">
+                                            {{ $value->{ Config::get('app.fallback_locale').'_title' } }}
+                                        </a>
                                         @else
-                                            <a href="{{route('blog.detail', $value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} )}}">
-                                                {{ $value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'} }}
-                                            </a>
+                                        <a
+                                            href="{{route('blog.detail', $value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} )}}">
+                                            {{ $value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'} }}
+                                        </a>
                                         @endif
                                     </h3>
                                     <p class="card-description">
-                                        @if ($value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'} == null)
-                                            {{ __('frontend.no_language_detect') }}
+                                        @if ($value->{Cookie::get( strtolower(env('APP_NAME')).'_language'
+                                        ).'_description'} == null)
+                                        {{ __('frontend.no_language_detect') }}
                                         @else
-                                            {!! split_sentence($value->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'}, 170, '...') !!}
+                                        {!! split_sentence( strip_tags($value->{Cookie::get(
+                                        strtolower(env('APP_NAME')).'_language' ).'_description'}) , 170, '...') !!}
                                         @endif
                                     </p>
                                     <p class="author">
@@ -248,8 +261,7 @@ blog-post
                                 </div>
                                 <div class="col-md-5">
                                     <div class="card-image">
-                                        <img class="img img-raised rounded
-                                              " src="{{asset('images/posts/'. $value->background_image)}}">
+                                        <img class="img img-raised rounded" src="{{ $value->media_url('card') }}">
                                     </div>
                                 </div>
                                 @endif

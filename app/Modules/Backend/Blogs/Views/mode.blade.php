@@ -197,10 +197,11 @@
     var slug = $('input[name=_slug]').val();
     $.ajax({
         url: '/dashboard/blog/tinymce/description',
-        method: "GET",
+        method: "POST",
         dataType: 'json',
         data: {
             slug:slug,
+            '_token': $('input[name=_token]').val()
         },
         success: (data) => {
             if (data.error) {
