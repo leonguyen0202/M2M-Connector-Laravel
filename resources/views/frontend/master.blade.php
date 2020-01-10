@@ -39,6 +39,15 @@
                 $(".error-alert").slideUp(700);
             });
         });
+
+        var botmanWidget = {
+            title: 'M2M Connector Chat Bot',
+            aboutText: 'M2M Connector Website',
+            bubbleAvatarUrl: '{{ asset("images/cover/botman-default.png") }}',
+            mainColor: '#ea7659',
+            introMessage: "✋ Hi! I'm the awesome automated chat bot.",
+        };
+        
     </script>
 </body>
 

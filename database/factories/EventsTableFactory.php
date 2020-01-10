@@ -19,7 +19,9 @@ $factory->define(Event::class, function (Faker $faker) {
         'author_id' => $author->id,
         'qr_code' => $faker->youtubeUri(),
         'participants' => participants_seeder(rand(1, 50)),
-        'event_date' => Carbon::now()->addDays(rand(1, 4)),
+        'type' => $faker->randomElement(['member', 'event']),
+        'start' => Carbon::now()->addDays(rand(5, 10)),
+        'end' => Carbon::now()->addDays(rand(11, 20)),
         'promotion' => '0',
         'is_completed' => $faker->randomElement([0, 1]),
 

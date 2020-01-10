@@ -50,14 +50,14 @@ blog-posts
                                 @if ( $top->{Cookie::get( strtolower(env('APP_NAME')) .'_language' ).'_slug' } != null )
                                 <a
                                     href="{{route('blog.detail', $top->{Cookie::get( strtolower(env('APP_NAME')) .'_language' ).'_slug' })}}">
-                                    <h3 class="white">
+                                    <h3 class="index_title">
                                         {{ split_sentence($top->{Cookie::get( strtolower(env('APP_NAME')) .'_language' ).'_title' }, 20, '...') }}
                                     </h3>
                                 </a>
                                 @else
                                 <a
                                     href="{{route('blog.detail', $top->{Config::get('app.fallback_locale').'_slug' } )}}">
-                                    <h3 class="white">
+                                    <h3 class="index_title">
                                         {{ split_sentence($top->{Config::get('app.fallback_locale').'_title' }, 20, '...') }}
                                     </h3>
                                 </a>
@@ -115,6 +115,14 @@ blog-posts
                                 {{ split_sentence($post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'}, 20, '...') }}
                                 @endif
                             </h5>
+
+                            <p class="card-description">
+                                @if ($post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'} != null)
+                                    {{ split_sentence( strip_tags($post->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'}) , 40, '...') }}
+                                @else
+                                    {{ __('frontend.no_language_detect') }}
+                                @endif
+                            </p>
 
                             <div class="card-footer">
                                 <div class="author">

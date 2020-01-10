@@ -71,13 +71,13 @@ blog-post
                         <i class="{!! render_conditional_class($is_bookmarked, 'fas', 'far') !!} fa-bookmark"></i>
                         Bookmark Post
                     </a>
-                    @endif
-
+                    
                     <form id="bookmark-form" action="{{ route('home.action') }}" method="POST" style="display: none;">
                         @csrf
                         <input type="hidden" name="email" id="email" value="{{Auth::user()->email}}">
                         <input type="hidden" name="type" id="type" value="blogs">
                     </form>
+                    @endif
                     @endguest
 
                     <a href="#pablo" class="btn btn-icon btn-lg btn-twitter btn-round">

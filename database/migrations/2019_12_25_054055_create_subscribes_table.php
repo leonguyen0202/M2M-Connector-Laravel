@@ -21,6 +21,7 @@ class CreateSubscribesTable extends Migration
             $table->json('categories')->nullable();
             $table->json('users')->nullable();
             $table->json('follow_by')->nullable();
+            $table->json('events')->nullable();
             $table->json('blogs')->nullable();
             $table->timestamps();
 

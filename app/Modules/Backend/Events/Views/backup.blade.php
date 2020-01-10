@@ -68,6 +68,23 @@ events->className: color classes: [ event-blue | event-azure | event-green | eve
                     var eventData;
                     event_title = $('#input-field').val();
 
+                    $.ajax({
+                        url: '/dashboard/events',
+                        method: 'POST',
+                        data: {
+                            type: result.value[0],
+                            title: result.value[1],
+                            url: result.value[2],
+                            className: className,
+                            start: start.format("YYYY-MM-DD HH:mm:ss"),
+                            end: end.format("YYYY-MM-DD HH:mm:ss"),
+                            '_token': $('input[name=_token]').val()
+                        },
+                        success: (data) => {
+                            console.log(data);
+                        },
+                    });
+
                     if (event_title) {
                         eventData = {
                             title: event_title,

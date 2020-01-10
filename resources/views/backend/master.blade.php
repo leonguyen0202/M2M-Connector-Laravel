@@ -16,7 +16,7 @@
     @stack('customCSS')
 </head>
 {{-- {!! render_conditional_class( isset($edit_mode) , render_conditional_class( isset($edit_mode),'onload="getDescription();"','') , '' ) !!} --}}
-<body class="">
+<body {!! render_conditional_class( Cache::has('_'. Auth::id(). '_sidebar_mini'), 'class='.Cache::get('_'. Auth::id(). '_sidebar_mini').' ', '' ) !!}>
     <div class="wrapper ">
         @include('backend._partials._sidebar')
         <div class="main-panel" id="main-panel">

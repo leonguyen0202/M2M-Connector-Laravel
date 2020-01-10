@@ -39,8 +39,9 @@ class EventStatusUpdateJob implements ShouldQueue
         }
         
         Event::query()->where([
+            ['type', '=', 'event'],
             ['is_completed', '=', '0'],
-            ['event_date', '<', Carbon::now()->toDateTimeString()],
+            ['end', '<', Carbon::now()->toDateTimeString()],
         ])->update([
             'is_completed' => '1',
         ]);

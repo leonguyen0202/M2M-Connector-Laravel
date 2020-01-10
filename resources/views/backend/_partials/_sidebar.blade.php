@@ -44,9 +44,13 @@
                             </a>
                         </li>
                         <li>
-                            <a href="#">
-                                <span class="sidebar-mini-icon">S</span>
-                                <span class="sidebar-normal">Settings</span>
+                            <a href="{{ route('logout') }}" class="logout-button">
+                                <span class="sidebar-mini-icon">
+                                    <i class="now-ui-icons media-1_button-power"></i>
+                                </span>
+                                <span class="sidebar-normal">
+                                    {{ __('frontend.logout') }}
+                                </span>
                             </a>
                         </li>
                     </ul>
@@ -56,34 +60,45 @@
         <ul class="nav">
             <li class="{{ set_request_class(['dashboard'],'active') }}">
                 <a href="{{route('dashboard.index')}}">
-                    <i class="now-ui-icons design_app"></i>
+                    <i class="fas fa-tachometer-alt"></i>
                     <p>{{__('backend.dashboard')}}</p>
                 </a>
             </li>
             <li class="{{ set_request_class(['dashboard/blogs', 'dashboard/blog*'],'active') }}">
                 <a href="{{route('blogs.index')}}">
-                    <i class="now-ui-icons files_single-copy-04"></i>
+                    <i class="fas fa-blog"></i>
                     <p>Blogs</p>
                 </a>
             </li>
+            {{-- @can('create-event', User::class) --}}
             <li class="{{ set_request_class(['dashboard/events', 'dashboard/event*'],'active') }}">
                 <a href="{{route('events.index')}}">
-                    <i class="now-ui-icons ui-1_calendar-60"></i>
+                    <i class="fas fa-calendar"></i>
                     <p>Events Calendar</p>
                 </a>
             </li>
+            {{-- @endcan --}}
+            @can('create-categories', User::class)
+            <li class="{{ set_request_class(['dashboard/categories', 'dashboard/categories*'],'active') }}">
+                <a href="#">
+                    <i class="fas fa-tags"></i>
+                    <p>Categories</p>
+                </a>
+            </li>
+            @endcan
+            
             <li>
                 <a data-toggle="collapse" href="#pagesExamples">
                     <i class="now-ui-icons education_atom"></i>
                     <p>
-                        Miscellaneous
+                        Subscription
                         <b class="caret"></b>
                     </p>
                 </a>
                 <div class="collapse " id="pagesExamples">
                     <ul class="nav">
                         <li>
-                            <a href="../examples/pages/pricing.html">
+                            <a href="#">
                                 <span class="sidebar-mini-icon">
                                     <i class="now-ui-icons education_agenda-bookmark"></i>
                                 </span>
@@ -93,7 +108,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="../examples/pages/rtl.html">
+                            <a href="#">
                                 <span class="sidebar-mini-icon">
                                     <i class="now-ui-icons shopping_tag-content"></i>
                                 </span>
@@ -101,24 +116,50 @@
                             </a>
                         </li>
                         <li>
-                            <a href="../examples/pages/timeline.html">
+                            <a href="#">
                                 <span class="sidebar-mini-icon">
                                     <i class="now-ui-icons users_single-02"></i>
                                 </span>
-                                <span class="sidebar-normal"> Follows </span>
+                                <span class="sidebar-normal"> {{ __('backend.follows') }} </span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#">
+                                <span class="sidebar-mini-icon">
+                                    <i class="now-ui-icons ui-1_calendar-60"></i>
+                                </span>
+                                <span class="sidebar-normal"> {{ __('backend.events') }} </span>
                             </a>
                         </li>
                     </ul>
                 </div>
             </li>
-            @if (Auth::user()->hasRole('super-admin'))
+            @can('access-settings', User::class)
             <li class="{{ set_request_class(['dashboard/settings'],'active') }}">
                 <a href="#">
                     <i class="now-ui-icons loader_gear"></i>
                     <p>Settings</p>
                 </a>
             </li>
-            @endif
+            @endcan
         </ul>
     </div>
 </div>
+
+@push('customJS')
+    <script>
+        $('#minimizeSidebar').on('click', function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/dashboard/sidebar-mini',
+                method: 'GET',
+                success: (data) => {
+                    
+                },
+                error: (jqXHR, textStatus, errorThrown) => {
+                    
+                },
+            });
+        });
+    </script>
+@endpush

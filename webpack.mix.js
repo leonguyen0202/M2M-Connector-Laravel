@@ -32,7 +32,6 @@ mix.js('resources/js/app.js', 'public/js')
         'public/dashboard/js/plugins/sweetalert2.min.js',
     ], 'public/js/core/kit.min.js')
     .scripts([
-        'public/dashboard/js/plugins/sweetalert2.min.js',
         'public/dashboard/js/plugins/bootstrap-notify.js',
         'public/dashboard/js/plugins/bootstrap-switch.js',
         'public/dashboard/js/plugins/bootstrap-tagsinput.js',

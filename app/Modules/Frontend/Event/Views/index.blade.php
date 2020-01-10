@@ -117,11 +117,11 @@ blog-posts
                         <div class="card-title text-left">
                             @if ($top->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} != null)
                                 <a href="{{route('event.detail', $top->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} )}}" style="color:white">
-                                    <h3>{{ split_sentence($top->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'}, 35, '...') }}</h3>
+                                    <h3 class="index_title">{{ split_sentence($top->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'}, 35, '...') }}</h3>
                                 </a>
                             @else
                                 <a href="{{route('event.detail', $top->{Config::get('app.fallback_locale').'_slug' })}}" style="color:white">
-                                    <h3>{{ split_sentence($top->{Config::get('app.fallback_locale').'_title' }, 35, '...') }}</h3>
+                                    <h3 class="index_title">{{ split_sentence($top->{Config::get('app.fallback_locale').'_title' }, 35, '...') }}</h3>
                                 </a>
                             @endif
                             
@@ -196,7 +196,7 @@ data-background-color="gray"
                                 </h5>
                                 <p class="card-description">
                                     @if ($event->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'} != null)
-                                        {{ split_sentence($event->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'}, 40, '...') }}
+                                        {{ split_sentence( strip_tags($event->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_description'}), 40, '...') }}
                                     @else
                                         {{ __('frontend.no_language_detect') }}
                                     @endif

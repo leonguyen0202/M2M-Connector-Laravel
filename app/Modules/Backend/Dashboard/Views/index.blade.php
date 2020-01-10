@@ -39,7 +39,7 @@
                                         <i class="now-ui-icons files_single-copy-04"></i>
                                     </div>
                                     <h3 class="info-title">
-                                        {{count(Auth::user()->has_blogs)}}
+                                        {{ count(Auth::user()->has_blogs) }}
                                     </h3>
                                     <h6 class="stats-title">Posts</h6>
                                 </div>
@@ -51,7 +51,7 @@
                                     <div class="icon icon-info">
                                         <i class="now-ui-icons users_single-02"></i>
                                     </div>
-                                    <h3 class="info-title">562</h3>
+                                    <h3 class="info-title">{{ $follower }}</h3>
                                     <h6 class="stats-title">Followers</h6>
                                 </div>
                             </div>

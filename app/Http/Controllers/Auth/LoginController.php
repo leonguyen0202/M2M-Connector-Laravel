@@ -67,6 +67,22 @@ class LoginController extends Controller
     }
 
     /**
+     * Validate the user login request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return void
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    protected function validateLogin(Request $request)
+    {
+        $request->validate([
+            $this->email_view_name() => 'required|string',
+            $this->password_view_name() => 'required|string',
+        ]);
+    }
+
+    /**
      * Get the needed authorization credentials from the request.
      * 
      * @param  \Illuminate\Http\Request  $request
@@ -75,5 +91,83 @@ class LoginController extends Controller
     protected function credentials(Request $request)
     {
         return ['email' => $request->{$this->email_view_name()}, 'password' => $request->{$this->password_view_name()}, 'is_active' => '1'];
+    }
+
+    /**
+     * The user has been authenticated.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  mixed  $user
+     * @return mixed
+     */
+    protected function authenticated(Request $request, $user)
+    {
+        $job = (new SubscribeJob($user))->delay(Carbon::now()->addSeconds(5));
+
+        dispatch($job);
+
+        Cache::store('database')->put('_' . $user->id . '_blog_view', 'table', Config::get('cache.lifetime'));
+
+        $auth_blogs = Auth::user()->has_blogs;
+        
+        $posts = collect([]);
+
+        foreach ($auth_blogs as $key => $value) {
+            $posts->push($value);
+        }
+
+        Cache::store('database')->put('_' . $user->id . '_blog_data', $posts, Config::get('cache.lifetime'));
+
+        return (url()->previous() != RouteServiceProvider::HOME) ? redirect()->to(url()->previous()) : redirect()->to(RouteServiceProvider::HOME);
+    }
+
+    /**
+     * Log the user out of the application.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function logout(Request $request)
+    {
+        $json_column = array();
+
+        $subscribe_table = Schema::getColumnListing('subscribes');
+
+        foreach ($subscribe_table as $key => $value) {
+            $type = \Illuminate\Support\Facades\DB::connection()->getDoctrineColumn('subscribes', $value)->getType()->getName();
+
+            if ($type == 'json') {
+                array_push($json_column, $value);
+            }
+        }
+
+        foreach ($json_column as $key => $value) {
+            if (Cache::has('_' . Auth::id() . '_' . $value)) {
+                Cache::forget('_' . Auth::id() . '_' . $value);
+            }
+        }
+
+        Cache::forget('_' . Auth::id() . '_blog_view');
+
+        Cache::forget('_' . Auth::id() . '_blog_data');
+
+        Cache::forget('_' . Auth::id() . '_full_calendar_event');
+
+        $this->guard()->logout();
+
+        $request->session()->invalidate();
+
+        return $this->loggedOut($request) ?: redirect('/');
+    }
+
+    /**
+     * The user has logged out of the application.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return mixed
+     */
+    protected function loggedOut(Request $request)
+    {
+        return (url()->previous() != RouteServiceProvider::HOME) ? redirect()->to(url()->previous()) : redirect()->to(RouteServiceProvider::HOME);
     }
 }

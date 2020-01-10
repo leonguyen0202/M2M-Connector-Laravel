@@ -13,6 +13,7 @@ use BotMan\BotMan\Messages\Outgoing\Actions\Button;
 use BotMan\Drivers\Web\WebDriver;
 use App\Traits\BotmanTraits;
 use BotMan\BotMan\BotMan;
+use App\Http\Middleware\TypingMiddleware;
 
 /**
  * Model Miscellaneous
@@ -80,15 +81,14 @@ class BotManController extends Controller
         //     $botman->reply($selectedValue);
         // });
 
-        $botman->hears('{message}', function ($botman, $message) {
-
+        $botman->hears('{message}', function (Botman $bot, $message) {
             if ( strtolower($message) == 'hi' || strtolower($message) == 'hello') {
-                $botman->reply("Hello there");
-                $botman->reply("What do you want me to do?");
+                $bot->reply("Hello there");
+                $bot->reply("What do you want me to do?");
             } else {
                 $keyword = implode("-", preg_split('/[-\s,_"?%&]+/', $message));
 
-                $botman->reply("<a href='" . env('APP_URL') . "/chatbot/filter/keyword=" . strtolower($keyword) . "&&language_code=en' target='_blank'>Result list</a>");
+                $bot->reply("<a href='" . env('APP_URL') . "/chatbot/filter/keyword=" . strtolower($keyword) . "&&language_code=en' target='_blank'>Result list</a>");
             }
         });
 

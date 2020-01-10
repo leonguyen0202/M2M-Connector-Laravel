@@ -28,7 +28,11 @@ class CreateEventsTable extends Migration
 
             $table->json('categories');
             $table->uuid('author_id');
-            $table->datetime('event_date');
+
+            $table->string('type', 10);
+            $table->datetime('start');
+            $table->datetime('end');
+
             $table->string('qr_code')->nullable();
             $table->json('participants')->nullable();
 

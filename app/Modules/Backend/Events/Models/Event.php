@@ -108,7 +108,8 @@ class Event extends Model implements HasMedia
      * @var array
      */
     protected $casts = [
-        'event_date' => 'datetime',
+        'start' => 'datetime',
+        'end' => 'datetime',
         'categories' => 'array'
     ];
 

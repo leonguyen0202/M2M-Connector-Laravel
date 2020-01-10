@@ -102,7 +102,7 @@ class User extends Authenticatable
         return $this->hasOne(Subscribe::class, 'user_id');
     }
 
-    public function subscribe_with_email()
+    public function has_subscribe()
     {
         return $this->hasOne(Subscribe::class, 'email', 'email');
     }

@@ -98,11 +98,9 @@ class BlogController extends Controller
             $subscriber = Subscribe::query()->where([
                 ['email', '=', Auth::user()->email],
             ])->first();
-
-            if ($subscriber != null) {
-                $this->is_followed = check_subscribe('_' . Auth::id() . '_users', $user, 'users');
-                $this->is_bookmarked = check_subscribe('_' . Auth::id() . '_blogs', $blog, 'blogs');
-            }
+            
+            $this->is_followed = check_subscribe('_' . Auth::id() . '_users', $user, 'users');
+            $this->is_bookmarked = check_subscribe('_' . Auth::id() . '_blogs', $blog, 'blogs');
         }
 
         return view('Blog::detail')->with([

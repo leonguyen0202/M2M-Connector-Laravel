@@ -80,8 +80,8 @@ class AppServiceProvider extends ServiceProvider
             // DB::statement('SET FOREIGN_KEY_CHECKS = 1');
         }
 
-        $job = (new EventStatusUpdateJob())->delay(Carbon::now()->addSeconds(rand(5,40)));
+        // $job = (new EventStatusUpdateJob())->delay(Carbon::now()->addMinutes(rand(5,40)));
 
-        dispatch($job);
+        // dispatch($job);
     }
 }

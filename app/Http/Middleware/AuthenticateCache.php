@@ -43,16 +43,21 @@ class AuthenticateCache
                     array_push($selectable_description, $value->locale_code . '_title');
                 }
 
+                array_push($selectable_description, 'start');
+                array_push($selectable_description, 'end');
+
                 $data = Event::query()->where([
                     ['author_id', '!=', Auth::id()],
+                    ['type', '=', 'event'],
                     ['is_completed', '=', '0'],
-                    ['event_date', '>', Carbon::now()->toDateTimeString()],
-                ])->orderBy('event_date', 'ASC')->get($selectable_description);
+                    ['start', '>', Carbon::now()->toDateTimeString()],
+                ])->orderBy('start', 'ASC')->get($selectable_description);
 
                 foreach ($data as $key => $value) {
                     array_push($results, [
                         "title" => $value->{Config::get('app.fallback_locale').'_title'},
-                        "start" => Carbon::parse($value->event_date)->toDateString(),
+                        "start" => Carbon::parse($value->start)->toDateTimeString(),
+                        "end" => Carbon::parse($value->end)->toDateTimeString(),
                         "className" => 'event-green',
                         "editable" => false,
                     ]);
@@ -61,10 +66,16 @@ class AuthenticateCache
                 $data = Auth::user()->has_events;
 
                 foreach ($data as $key => $value) {
+                    if ($value->type == 'member') {
+                        $className = 'event-orange';
+                    } else {
+                        $className = 'event-azure';
+                    };
                     array_push($results, [
                         "title" => $value->{Config::get('app.fallback_locale').'_title'},
-                        "start" => Carbon::parse($value->event_date)->toDateString(),
-                        "className" => 'event-green',
+                        "start" => Carbon::parse($value->start)->toDateTimeString(),
+                        "end" => Carbon::parse($value->end)->toDateTimeString(),
+                        "className" => $className,
                     ]);
                 }
 

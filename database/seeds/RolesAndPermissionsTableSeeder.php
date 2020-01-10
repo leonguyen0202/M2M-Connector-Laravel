@@ -36,30 +36,23 @@ class RolesAndPermissionsTableSeeder extends Seeder
         Permission::create(['name' => 'update-categories']);
         Permission::create(['name' => 'delete-categories']);
 
-        Permission::create(['name' => 'access-dashboard']);
-        Permission::create(['name' => 'edit-any']);
+        Permission::create(['name' => 'access-settings']);
 
-        Permission::create(['name' => 'acceess-developer-settings']);
+        Role::create(['name' => 'developer']);
 
-        $developerRole = Role::create([
-            'name' => 'developer'
-        ]);
+        Role::create(['name' => 'super-admin',]);
 
-        $developerRole->givePermissionTo(Permission::where([
-            ['name', '=', 'acceess-developer-settings']
-        ])->first());
+        // $developerRole->givePermissionTo(Permission::where([
+        //     ['name', '=', 'acceess-developer-settings']
+        // ])->first());
 
-        $role = Role::create([
-            'name' => 'super-admin',
-        ]);
+        // $role->givePermissionTo(Permission::all());
 
-        $role->givePermissionTo(Permission::all());
+        $admin = \App\User::where('email', 'admin@gmail.com')->first();
 
-        $developer = \App\User::where('email', 'admin@gmail.com')->first();
+        $admin->assignRole('super-admin');
 
-        $developer->assignRole('super-admin');
-
-        $developer->assignRole('developer');
+        $admin->assignRole('developer');
 
     }
 }

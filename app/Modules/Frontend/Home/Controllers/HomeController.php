@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Backend\Blogs\Models\Blog;
 use App\Modules\Backend\Events\Models\Event;
 use App\Modules\Backend\Subscribes\Models\Subscribe;
+use App\Modules\Backend\Subscribes\Jobs\SubscribeJob;
 use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -104,8 +105,10 @@ class HomeController extends Controller
         // echo gettype($json);
 
         /**
-         * Test
+         * End debug
          */
+
+        // dd(Cache::get('_'.Auth::id().'_blogs'));
 
         $posts = Blog::query()->orderBy('created_at', 'DESC')->paginate(9);
 
@@ -114,24 +117,26 @@ class HomeController extends Controller
         $event_id = array();
 
         $events = Event::where([
-            'is_completed' => '0',
+            ['type', '=', 'event'],
+            ['is_completed', '=', '0'],
         ])->get()->count();
 
         if ($events >= $this->slider) {
 
-            $promo_count = Event::query()->select(
+            $promo_count = Event::query()->where([
+                ['type', '=', 'event'],
+                ['promotion', '=', '1'],
+                ['is_completed', '=', '0'],
+            ])->select(
                 DB::raw('COUNT(*) as total'),
                 'promotion',
                 'is_completed'
-            )->where([
-                ['promotion', '=', '1'],
-                ['is_completed', '=', '0'],
-            ])->groupBy('promotion', 'is_completed')
-                ->first();
+            )->groupBy('promotion', 'is_completed')
+            ->first();
 
-            if ($promo_count->total > 1) {
-
+            if ($promo_count) {
                 $promo_event = Event::where([
+                    ['type', '=', 'event'],
                     ['promotion', '=', '1'],
                     ['is_completed', '=', '0'],
                 ])->get();
@@ -139,18 +144,16 @@ class HomeController extends Controller
                 for ($i = 0; $i < $promo_count->total; $i++) {
                     array_push($event_id, $promo_event[$i]->id);
                 }
-
-                $free_event = Event::query()->where([
-                    ['promotion', '=', '0'],
-                    ['is_completed', '=', '0'],
-                ])->inRandomOrder()->limit($this->slider - $promo_count->total)->get();
-
-            } else {
-                $free_event = Event::query()->where([
-                    ['promotion', '=', '0'],
-                    ['is_completed', '=', '0'],
-                ])->inRandomOrder()->limit($this->slider)->get();
             }
+
+            $free_event = Event::query()->where([
+                ['type', '=', 'event'],
+                ['promotion', '=', '0'],
+                ['is_completed', '=', '0'],
+            ])->whereNotIn('id', $event_id)
+            ->inRandomOrder()
+            ->limit($this->slider - count($event_id))
+            ->get();
 
             for ($i = 0; $i < count($free_event); $i++) {
                 array_push($event_id, $free_event[$i]->id);
@@ -162,6 +165,7 @@ class HomeController extends Controller
             $sliders = array();
 
             $free_event = Event::query()->where([
+                ['type', '=', 'event'],
                 ['is_completed', '=', '0'],
             ])->get();
 
@@ -169,7 +173,7 @@ class HomeController extends Controller
                 array_push($sliders, $free_event[$i]);
             }
 
-            $slider_post = Blog::query()->inRandomOrder()->limit($this->slider - $events)->get();
+            $slider_post = Blog::query()->inRandomOrder()->limit($this->slider - count($sliders))->get();
 
             for ($i = 0; $i < count($slider_post); $i++) {
                 array_push($sliders, $slider_post[$i]);
@@ -199,7 +203,91 @@ class HomeController extends Controller
     {
         if (!Auth::user()) {
             return redirect()->back();
-            // return response()->json(['error' => __('frontend.not_login')]);
+        }
+
+        $user = Auth::user();
+
+        if ($user->email != $request->input('email')) {
+            return redirect()->back();
+        }
+
+        $subscriber = Subscribe::where('email', $user->email)->first();
+
+        $url_string = trim(str_replace(env('APP_URL'), '', url()->previous()), '/');
+
+        $url = explode("/", $url_string);
+
+        if ( (strtolower($request->input('type')) == 'blogs' && $url[0] == 'blog') || (strtolower($request->input('type')) == 'events' && $url[0] == 'event') ) {
+            $record = ($this->converting_model( Str::plural(ucfirst( $url[0] )), Str::singular(ucfirst( $url[0] )) ))::query()->where([
+                [Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug', '=', $url[1]]
+            ])->orWhere([
+                [Config::get('app.fallback_locale').'_slug', '=', $url[1]]
+            ])->first();
+        } else if (strtolower($request->input('type')) == 'categories' && $url[0] == 'category') {
+            $record = Category::query()->where([
+                ['slug', '=', $url[1]]
+            ])->first();
+        } else {
+            if (strtolower($request->input('type')) == 'users' && $url[0] == 'user') {
+                # follow at profile page
+            } else if (strtolower($request->input('type')) == 'users') {
+                # follow user at blog or event page
+                $record = ($this->converting_model( Str::plural(ucfirst( $url[0] )), Str::singular(ucfirst( $url[0] )) ))::query()->where([
+                    [Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug', '=', $url[1]]
+                ])->orWhere([
+                    [Config::get('app.fallback_locale').'_slug', '=', $url[1]]
+                ])
+                ->first();
+
+                if (!$record) {
+                    return redirect()->back()->with('errors', 'Data is not exist!');
+                }
+
+                $record = $record->author;
+            } else {
+                return redirect()->back()->with('errors', 'Data is not exist!');
+            }
+        }
+
+        if (!$record) {
+            return redirect()->back()->with('errors', 'Data is not exist!');
+        }
+        
+        $result = array();
+
+        if ( Cache::has('_' . Auth::id() .  '_' . strtolower($request->input('type'))) ) {
+            $cache_data = Cache::get('_' . Auth::id() . '_' . strtolower($request->input('type'))); // Array
+
+            if (gettype(array_search($record->id, $cache_data)) == 'integer') {
+                if (count($cache_data) < 2) {
+                    $cache_data = array();
+                } else {
+                    unset($cache_data[array_search($record->id, $cache_data)]);
+                }
+            } else {
+                array_push($result, $record->id);
+            }
+            
+            foreach ($cache_data as $key => $value) {
+                array_push($result, $value);
+            }
+        } else {
+            array_push($result, $record->id);
+        }
+
+        Cache::store('database')->put('_'. Auth::id().'_'. strtolower($request->input('type')), $result, Config::get('cache.lifetime'));
+
+        $job = ( new SubscribeJob($user, strtolower($request->input('type')), $result ) )->delay(Carbon::now()->addSeconds(5));
+
+        dispatch($job);
+
+        return redirect()->back();
+    }
+
+    public function backup(Request $request)
+    {
+        if (!Auth::user()) {
+            return redirect()->back();
         }
 
         $user = Auth::user();
@@ -214,7 +302,7 @@ class HomeController extends Controller
 
         $url = explode("/", $url_string);
         
-        if (strtolower($request->input('type')) == 'blogs' || strtolower($request->input('type')) == 'categories' || strtolower($request->input('type')) == 'users') {
+        if (strtolower($request->input('type')) == 'blogs' || strtolower($request->input('type')) == 'events' || strtolower($request->input('type')) == 'categories' || strtolower($request->input('type')) == 'users') {
             $column = Str::plural(strtolower($request->input('type')));
 
             if ($url[0] == 'blog' || $url[0] == 'event') {
@@ -236,10 +324,11 @@ class HomeController extends Controller
                 $record = ($this->converting_model( Str::plural(ucfirst( $url[0] )), Str::singular(ucfirst( $url[0] )) ))::query()->where([
                     ['slug', '=', $url[1]]
                 ])->first();
-            }
-            // else if ($url[0] == 'user') {
-                
-            // } 
+            } else if ($url[0] == 'user') {
+                $record = User::where([
+                    ['name', '=', $url[1]]
+                ])->first();
+            } 
             else {
                 return redirect()->back();
             }
@@ -318,5 +407,14 @@ class HomeController extends Controller
         } else {
             return redirect()->back();
         }
+    }
+
+    protected function get_slug_url()
+    {
+        $url_string = trim(str_replace(env('APP_URL'), '', url()->previous()), '/');
+
+        $url = explode("/", $url_string);
+
+        return $url[1];
     }
 }

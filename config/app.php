@@ -170,6 +170,7 @@ return [
         Yajra\DataTables\DataTablesServiceProvider::class,
         Laracasts\Utilities\JavaScript\JavaScriptServiceProvider::class,
         Inani\OxfordApiWrapper\OxfordWrapperServiceProvider::class,
+        SimpleSoftwareIO\QrCode\QrCodeServiceProvider::class,
 
         /**
          * Modules Service Providers
@@ -241,6 +242,7 @@ return [
          * Package aliases
          */
         'DataTables' => Yajra\DataTables\Facades\DataTables::class,
+        'QrCode' => SimpleSoftwareIO\QrCode\Facades\QrCode::class,
         // 'JavaScript' => Laracasts\Utilities\JavaScript\JavaScriptFacade::class,
     ],
 

@@ -3,6 +3,7 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Session;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -18,7 +19,11 @@ use Illuminate\Support\Facades\Session;
 
 //     return view('frontend.master');
 // });
-
+Route::get('qr-code', function ()
+{
+    echo "ABC<br>";
+    return QrCode::size(200)->backgroundColor(255,255,0)->generate('A basic example of QR code!');
+});
 // Auth::routes();
 Route::post('/register', 'Auth\RegisterController@register')->middleware(['web','guest'])->name('register');
 

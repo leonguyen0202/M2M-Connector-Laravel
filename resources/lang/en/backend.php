@@ -13,6 +13,7 @@ return [
     'categories' => 'Categories',
     'bookmark' => 'Bookmark',
     'follows' => 'Follows',
+    'events' => 'Events',
 
     /**
      * Blog page

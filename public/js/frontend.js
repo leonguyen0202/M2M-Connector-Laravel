@@ -1,9 +1,3 @@
-
-var botmanWidget = {
-    title: 'M2M Connector Chat Bot',
-    aboutText: 'M2M Connector Website',
-    introMessage: "✋ Hi! I'm the awesome automated chat bot.",
-};
 $(document).ready(function () {
     $(".alert-danger").fadeTo(2000, 700).slideUp(700, function(){
         $(".alert-danger").slideUp(700);

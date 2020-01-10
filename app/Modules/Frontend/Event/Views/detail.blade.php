@@ -26,7 +26,7 @@ data-background-color="gray"
     <div class="content-center">
         <div class="row">
             <div class="col-md-8 ml-auto mr-auto text-center">
-                <h2 class="title">
+                <h2 class="title" style="color:white;">
                     @if ($event->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'} != null)
                         {{ $event->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'} }}
                     @else
@@ -47,12 +47,12 @@ data-background-color="gray"
         <div class="row">
             <div class="col-md-12">
                 <div class="button-container">
-                    @if (isset($event->qr_code))
+                    {{-- @if (isset($event->qr_code))
                     <a href="#pablo" class="btn btn-primary btn-round btn-lg" data-toggle="modal"
                         data-target="#qrCodeModal">
                         <i class="now-ui-icons text_align-left"></i> View QR Code
                     </a>
-                    @endif
+                    @endif --}}
 
                     <a href="#pablo" class="btn btn-icon btn-lg btn-twitter btn-round">
                         <i class="fab fa-twitter"></i>
@@ -63,6 +63,21 @@ data-background-color="gray"
                     <a href="#pablo" class="btn btn-icon btn-lg btn-google btn-round">
                         <i class="fab fa-google"></i>
                     </a>
+
+                    @guest
+                    <a href="#" class="btn btn-primary btn-round btn-lg event-subscribe">
+                        <i class="far fa-bell"></i>&nbsp;Subscribe
+                    </a>
+                    @else
+                    <a href="#" class="btn {!! render_conditional_class($is_subscribed, 'btn-success', 'btn-primary') !!} btn-round btn-lg event-subscribe">
+                        <i class="{!! render_conditional_class($is_subscribed, 'fas', 'far') !!} fa-bell"></i>&nbsp;Subscribe
+                    </a>
+                    <form id="subscribe-form" action="{{ route('home.action') }}" method="POST" style="display: none;">
+                        @csrf
+                        <input type="hidden" name="email" id="email" value="{{Auth::user()->email}}">
+                        <input type="hidden" name="type" id="type" value="events">
+                    </form>
+                    @endguest
                 </div>
             </div>
         </div>
@@ -90,7 +105,7 @@ data-background-color="gray"
                     <div class="row">
                         <div class="col-md-12">
                             <div class="blog-tags">
-                                Categories:
+                                Categories:&nbsp;
                                 @foreach (($event->categories) as $key => $value)
                                     @foreach ($value as $item)
                                     <span class="label label-primary">
@@ -98,6 +113,7 @@ data-background-color="gray"
                                             style="text-decoration: none; color:red" onMouseOut="this.style.color='red'"
                                             onMouseOver="this.style.color='{{ render_all_categories('color', $item) }}'">{{render_all_categories('title', $item)}}</a>
                                     </span>
+                                    &nbsp;
                                     @endforeach
                                 @endforeach
                             </div>
@@ -165,11 +181,9 @@ data-background-color="gray"
                     </div>
                 </div>
 
-                <div class="modal-body text-center" data-background-color>
-                    {{-- {!!
-                    QrCode::size(200)->generate('https://docs.google.com/forms/d/18tZIufI47jcTDEMBS8tSY_Km0dzxzt_ND6oSvDn7hRI/edit?usp=sharing')
-                    !!} --}}
-                    {!! QrCode::size(200)->generate($event->qr_code) !!}
+                <div class="modal-body text-center">
+                    {{-- {!! \QrCode::size(200)->generate('https://docs.google.com/presentation/d/1yoVwKxMijgZb2QMEh5Cbqj0grBYRy_fhSWOo5jD7NR4/edit#slide=id.p3') !!} --}}
+                    {{-- {!! QrCode::generate('http://www.simplesoftware.io'); !!} --}}
                 </div>
                 <div class="modal-footer text-center justify-content-center">
                     {{-- <a href="#pablo" class="btn btn-neutral btn-round btn-lg btn-block">Get Started</a> --}}
@@ -186,6 +200,15 @@ data-background-color="gray"
 <script type="text/javascript">
     $(document).ready(function () {
 
+        $('.event-subscribe').on('click', function (e) {
+            e.preventDefault();
+
+            $('#login_email').val("");
+            $('#login_password').val("");
+
+            $('#loginModal').modal('show');
+        });
+
         $('.follow-button').on('click', function (e) {
             e.preventDefault();
 
@@ -193,18 +216,24 @@ data-background-color="gray"
             $('#login_password').val("");
 
             $('#loginModal').modal('show');
-        })
+        });
     });
 </script>
 @else
 <script type="text/javascript">
     $(document).ready(function () {
 
+        $('.event-subscribe').on('click', function (e) {
+            e.preventDefault();
+
+            document.getElementById('subscribe-form').submit();
+        });
+
         $('.follow-button').on('click', function (e) {
             e.preventDefault();
 
             document.getElementById('follow-form').submit();
-        })
+        });
     })
 </script>
 @endguest

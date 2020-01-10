@@ -34,7 +34,7 @@
                 </div>
                 @else
 
-                @if (Auth::user()->subscribe_with_id || Auth::user()->subscribe_with_email)
+                @if (Auth::user()->subscribe_with_id || Auth::user()->has_subscribe)
                 <div class="col-md-9 mr-auto ml-auto text-center">
                     <div class="alert alert-success" role="alert">
                         <div class="container">

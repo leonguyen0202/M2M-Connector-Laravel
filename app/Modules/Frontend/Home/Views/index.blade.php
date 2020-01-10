@@ -164,11 +164,11 @@ sections-page
                         <div class="card-title text-left title">
                             @if ($top->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} != null)
                                 <a href="{{route('blog.detail', $top->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'}) }}">
-                                    <h3 style="color:white;">{{ split_sentence($top->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'}, 35, '...') }}</h3>
+                                    <h3 class="index_title">{{ split_sentence($top->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_title'}, 35, '...') }}</h3>
                                 </a>
                             @else
                                 <a href="{{route('blog.detail', $top->{Config::get('app.fallback_locale').'_slug'} ) }}">
-                                    <h3 style="color:white;">{{ split_sentence($top->{Config::get('app.fallback_locale').'_title'}, 35, '...') }}</h3>
+                                    <h3 class="index_title">{{ split_sentence($top->{Config::get('app.fallback_locale').'_title'}, 35, '...') }}</h3>
                                 </a>
                             @endif
                         </div>

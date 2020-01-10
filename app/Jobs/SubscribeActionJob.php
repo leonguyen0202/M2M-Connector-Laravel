@@ -90,6 +90,33 @@ class SubscribeActionJob implements ShouldQueue
                 '' . $column . '' => json_return(null, $record, $column),
             ]);
         }
+
+        if ($column == 'users') {
+            foreach (($this->subscriber)->users as $key => $value) {
+                if ($value) {
+                    # code...
+                }
+                $user = \App\User::find($value);
+
+                $followed = Subscribe::query()->where([
+                    ['email', '=', $user->email]
+                ])->first();
+
+                if ($followed) {
+                    $data = json_return($followed->follow_by, $this->subscriber, 'follow_by');
+
+                    $followed->follow_by = $data;
+
+                    $followed->save();
+                } else {
+                    Subscribe::create([
+                        'user_id' => $user->id,
+                        'email' => $user->email,
+                        'follow_by' => json_return(null, $this->subscriber, 'follow_by'),
+                    ]);
+                }
+            }
+        }
     }
 
     protected function converting_model($plural, $singular)

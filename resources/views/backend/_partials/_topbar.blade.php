@@ -73,7 +73,7 @@
                     </div>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('logout') }}" id="logout-button">
+                    <a class="nav-link" href="{{ route('logout') }}" class="logout-button">
                         <i class="now-ui-icons media-1_button-power"></i>
                         <p>
                             <span class="d-lg-none d-md-block">{{ __('frontend.logout') }}</span>
@@ -92,7 +92,7 @@
 @push('customJS')
 <script type="text/javascript">
     $(document).ready(function () {
-            $('#logout-button').on('click', function (e) {
+            $('.logout-button').on('click', function (e) {
                 e.preventDefault();
                 document.getElementById('logout-form').submit();
             })
