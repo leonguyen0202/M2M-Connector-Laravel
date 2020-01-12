@@ -71,17 +71,21 @@ events->className: color classes: [ event-blue | event-azure | event-green | eve
                     $.ajax({
                         url: '/dashboard/events',
                         method: 'POST',
-                        data: {
-                            type: result.value[0],
-                            title: result.value[1],
-                            url: result.value[2],
-                            className: className,
-                            start: start.format("YYYY-MM-DD HH:mm:ss"),
-                            end: end.format("YYYY-MM-DD HH:mm:ss"),
-                            '_token': $('input[name=_token]').val()
+                        dataType: 'json',
+                        processData: false,
+                        contentType: false,
+                        cache: false,
+                        data: form,
+                        headers: {
+                            'X-CSRF-Token': $('input[name=_token]').val(),
                         },
                         success: (data) => {
-                            console.log(data);
+                            if (data.error) {
+                                initBackend.sweetAlertError(data.error);   
+                            }
+                        },
+                        error: (jqXHR, textStatus, errorThrown) => {
+                            initBackend.formatErrorMessage(jqXHR, errorThrown);
                         },
                     });
 

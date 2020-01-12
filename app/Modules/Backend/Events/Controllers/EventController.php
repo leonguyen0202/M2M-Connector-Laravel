@@ -3,7 +3,8 @@
 namespace App\Modules\Backend\Events\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Modules\Backend\Blogs\Models\Blog;
+use App\Modules\Backend\Categories\Models\Category;
+use App\Modules\Backend\Events\Jobs\EventCRUDJob;
 use App\Modules\Backend\Events\Models\Event;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Request as FacadeRequest;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class EventController extends Controller
@@ -28,6 +31,62 @@ class EventController extends Controller
         $this->fileName = 'default-background.jpg';
         $this->name = str_shuffle(Str::random(60)) . '_' . time();
         $this->languages = DB::table('localization')->select('locale_name', 'locale_code')->get();
+    }
+
+    /**
+     * Test image download
+     */
+    protected function file_get_contents_curl($url) { 
+        $ch = curl_init(); 
+      
+        curl_setopt($ch, CURLOPT_HEADER, 0); 
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); 
+        curl_setopt($ch, CURLOPT_URL, $url); 
+      
+        $data = curl_exec($ch); 
+        curl_close($ch); 
+      
+        return $data; 
+    } 
+    public function image_test()
+    {
+        // $url = 'https://www.imgbase.info/images/safe-wallpapers/miscellaneous/1_other_wallpapers/28634_1_other_wallpapers_danboard.jpg';
+
+        $url = "http://hd.wallpaperswide.com/thumbs/ghosts_ii-t2.jpg";
+
+        $contents = file_get_contents($url);
+
+        $extension = (explode('.', basename($url) ))[ array_key_last( explode('.', basename($url) ) ) ];
+
+        $this->fileName = $this->name . '.' . $extension;
+        
+        Storage::disk('upload')->put($this->fileName, $contents);
+
+        return "DOWNLOADED";
+    }
+
+    public function event_categories_data_source(Request $request)
+    {
+        $search = $request->search;
+
+        $data = array();
+
+        if ($search == '') {
+            $categories = Category::query()->select('title', 'slug')->get();
+        } else {
+            $categories = Category::query()->where([
+                ['title', 'like', '%' . $search . '%'],
+            ])->get();
+        }
+
+        foreach ($categories as $key => $value) {
+            array_push($data, [
+                'id' => $value->slug,
+                'text' => $value->title,
+            ]);
+        }
+
+        return response()->json($data);
     }
 
     /**
@@ -84,6 +143,8 @@ class EventController extends Controller
                     "className" => $className,
                 ]);
             }
+
+            Cache::store('database')->put('_' . Auth::id() . '_full_calendar_event', $events, Config::get('cache.lifetime'));
         }
 
         return response()->json($events);
@@ -98,7 +159,7 @@ class EventController extends Controller
         ])->first();
 
         if ($event) {
-            return response()->json(['error' => 'Title has been taken']);
+            return response()->json(['error' => __('form.blog_title_unique')]);
         }
         return response()->json(['success' => 'Ok']);
     }
@@ -120,7 +181,7 @@ class EventController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param array $value [title, start,end]
+     * @param \Illuminate\Http\Request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -130,42 +191,29 @@ class EventController extends Controller
 
             $this->fileName = $this->name . '.' . $files->getClientOriginalExtension();
 
-            return response()->json([ 'image' => $this->fileName ]);
+            Storage::disk('upload')->putFileAs('', $files, $this->fileName);
         } else {
-            return response()->json(['data' => $request->all()]);
+            return response()->json(['error' => 'Invalid image file!']);
         }
-        
-        /**
-         * End debug
-         */
 
-        $content_dummy = Blog::inRandomOrder()->first();
+        $events = array();
 
         if (Cache::has('_' . Auth::id() . '_full_calendar_event')) {
             $events = Cache::get('_' . Auth::id() . '_full_calendar_event');
-
-            array_push($events, [
-                "title" => $request->title,
-                "start" => Carbon::parse($request->start)->toDateTimeString(),
-                "end" => Carbon::parse($request->end)->toDateTimeString(),
-                "className" => $request->className,
-            ]);
-        } else {
-            $events = array();
-
-            array_push($events, [
-                "title" => $request->title,
-                "start" => Carbon::parse($request->start)->toDateTimeString(),
-                "end" => Carbon::parse($request->end)->toDateTimeString(),
-                "className" => $request->className,
-            ]);
         }
 
+        array_push($events, [
+            "title" => $request->title,
+            "start" => Carbon::parse($request->start)->toDateTimeString(),
+            "end" => Carbon::parse($request->end)->toDateTimeString(),
+            "className" => $request->className,
+        ]);
+
         $array_job = [
-            'en_title' => $request->title,
-            'en_description' => $content_dummy->en_description,
-            'background_image' => random_image(['disk' => 'public', 'dir' => 'dummy/events']),
-            'categories' => categories_seeder(),
+            (Config::get('app.fallback_locale') . '_title') => $request->title,
+            (Config::get('app.fallback_locale') . '_description') => $request->description,
+            'background_image' => $this->fileName,
+            'categories' => form_json_convert(explode(",", $request->categories), 'categories_id'),
             'author_id' => Auth::id(),
             'promotion' => '0',
             'is_completed' => '0',
@@ -175,15 +223,62 @@ class EventController extends Controller
             'end' => $request->end,
         ];
 
-        Event::create($array_job);
+        $job = (new EventCRUDJob(null, $array_job, FacadeRequest::method()))->delay(Carbon::now()->addSeconds(rand(40, 60)));
+
+        dispatch($job);
 
         Cache::store('database')->put('_' . Auth::id() . '_full_calendar_event', $events, Config::get('cache.lifetime'));
 
         return response()->json(['success' => 'Success']);
     }
 
-    public function destroy()
+    /**
+     * Delete existing resource that match param
+     *
+     * @param string $title
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($title)
     {
-        # code...
+        if (!FacadeRequest::isMethod("DELETE")) {
+            return response()->json(['error' => __('form.not_support_method')]);
+        }
+
+        $event = Event::query()->where([
+            ['author_id', '=', Auth::id()],
+        ])->where([
+            [(Cookie::get(strtolower(env('APP_NAME')) . '_language') . '_title'), '=', $title],
+        ])->orWhere([
+            [(Config::get('app.fallback_locale') . '_title'), '=', $title],
+        ])->first();
+
+        if (!$event) {
+            return response()->json(['error' => __('form.data_not_exist')]);
+        }
+
+        $events_cache_data = $this->remove_cache($title);
+
+        Cache::store('database')->put('_' . Auth::id() . '_full_calendar_event', $events_cache_data, Config::get('cache.lifetime'));
+
+        $job = (new EventCRUDJob($event->id, array(), FacadeRequest::method()))->delay(Carbon::now()->addSeconds(rand(40, 60)));
+
+        dispatch($job);
+
+        return response()->json(['success' => 'Success']);
+    }
+
+    protected function remove_cache($title)
+    {
+        $cache = Cache::get('_' . Auth::id() . '_full_calendar_event');
+
+        foreach ($cache as $key => $value) {
+            // foreach ($value as $index => $item) {
+            if ($value['title'] == $title) {
+                unset($cache[$key]);
+            }
+            // }
+        }
+
+        return array_values($cache);
     }
 }

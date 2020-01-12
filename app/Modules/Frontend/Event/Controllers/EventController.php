@@ -114,10 +114,6 @@ class EventController extends Controller
         }
 
         if (Auth::user()) {
-            $subscriber = Subscribe::query()->where([
-                ['email', '=', Auth::user()->email],
-            ])->first();
-
             $user = $event->author;
             
             $this->is_followed = check_subscribe('_' . Auth::id() . '_users', $user, 'users');

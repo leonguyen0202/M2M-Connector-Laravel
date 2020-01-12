@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use App\Modules\Backend\Events\Models\Event;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Jobs\SubscribeJob;
@@ -117,6 +118,56 @@ class LoginController extends Controller
         }
 
         Cache::store('database')->put('_' . $user->id . '_blog_data', $posts, Config::get('cache.lifetime'));
+
+        $languages = DB::table('localization')->select('locale_name', 'locale_code')->get();
+
+        $events = array();
+
+        $selectable_description = array();
+
+        foreach ($languages as $key => $value) {
+            array_push($selectable_description, $value->locale_code . '_title');
+        }
+
+        array_push($selectable_description, 'start');
+        array_push($selectable_description, 'end');
+
+        $data = Event::query()->where([
+            ['author_id', '!=', $user->id],
+            ['type', '=', 'event'],
+            ['is_completed', '=', '0'],
+            ['start', '>', Carbon::now()->toDateTimeString()],
+        ])->orderBy('start', 'ASC')->get($selectable_description);
+
+        foreach ($data as $key => $value) {
+            array_push($events, [
+                "title" => $value->{Config::get('app.fallback_locale').'_title'},
+                "start" => Carbon::parse($value->start)->toDateTimeString(),
+                "end" => Carbon::parse($value->end)->toDateTimeString(),
+                "className" => 'event-green',
+                "editable" => false,
+            ]);
+        }
+
+        $data = $user->has_events;
+
+        foreach ($data as $key => $value) {
+
+            if ($value->type == 'member') {
+                $className = 'event-orange';
+            } else {
+                $className = 'event-azure';
+            };
+
+            array_push($events, [
+                "title" => $value->{Config::get('app.fallback_locale').'_title'},
+                "start" => Carbon::parse($value->start)->toDateString(),
+                "end" => Carbon::parse($value->end)->toDateString(),
+                "className" => $className,
+            ]);
+        }
+
+        Cache::store('database')->put('_' . $user->id . '_full_calendar_event', $events, Config::get('cache.lifetime'));
 
         return (url()->previous() != RouteServiceProvider::HOME) ? redirect()->to(url()->previous()) : redirect()->to(RouteServiceProvider::HOME);
     }

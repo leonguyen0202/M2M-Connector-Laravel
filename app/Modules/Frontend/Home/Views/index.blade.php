@@ -19,17 +19,9 @@
         @foreach ($sliders as $key => $item)
         <div class="carousel-item {{slider_active_class($key, 'active')}}">
             <div class="page-header header-filter">
-
-                @if ($item instanceof \App\Modules\Backend\Blogs\Models\Blog)
                 <div class="page-header-image"
                     style="background-image: url({{ $item->media_url('slider') }});">
                 </div>
-                @elseif($item instanceof \App\Modules\Backend\Events\Models\Event)
-                <div class="page-header-image"
-                    style="background-image: url({{ url(asset('images/events/'.$item->background_image)) }});">
-                </div>
-                @endif
-
                 <div class="content-center">
                     <div class="container">
                         <div class="content-center">

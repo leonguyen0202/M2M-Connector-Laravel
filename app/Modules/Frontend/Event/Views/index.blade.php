@@ -112,7 +112,7 @@ blog-posts
             @foreach ($top_participated as $top)
             <div class="col-md-6">
                 <div class="card card-background"
-                    style="background-image: url( {{url(asset('images/events/'.$top->background_image))}} )">
+                    style="background-image: url( {{ $top->media_url('card') }} )">
                     <div class="card-body">
                         <div class="card-title text-left">
                             @if ($top->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} != null)
@@ -174,12 +174,12 @@ data-background-color="gray"
                             <div class="card-image">
                                 @if ($event->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'} != null)
                                     <a href="{{route('event.detail', $event->{Cookie::get( strtolower(env('APP_NAME')).'_language' ).'_slug'})}}">
-                                        <img class="img rounded" src="{{asset('images/events/'. $event->background_image)}}"
+                                        <img class="img rounded" src="{{ $event->media_url('card') }}"
                                             alt="{{ $event->{Cookie::get(strtolower(env('APP_NAME')).'_language').'_title'} }}">
                                     </a>
                                 @else
                                     <a href="{{route('event.detail', $event->{Config::get('app.fallback_locale').'_slug' })}}">
-                                        <img class="img rounded" src="{{asset('images/events/'. $event->background_image)}}"
+                                        <img class="img rounded" src="{{ $event->media_url('card') }}"
                                             alt="{{ $event->{Config::get('app.fallback_locale').'_title'} }}">
                                     </a>
                                 @endif

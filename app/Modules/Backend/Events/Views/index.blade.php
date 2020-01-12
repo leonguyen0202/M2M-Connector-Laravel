@@ -11,7 +11,11 @@
     .event-box .row .calendar-trash {
         flex-grow: 1;
     }
+    .select2-container {
+        z-index: 99999999999999;
+    }
 </style>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/css/select2.min.css" rel="stylesheet" />
 @endpush
 
 @section('content')
@@ -61,6 +65,8 @@
 
 @push('customJS')
 <script src="{{ asset('js/tinymce/js/tinymce/tinymce.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.0.12/dist/js/select2.min.js"></script>
+<script src="{{asset('js/initBackend.js')}}"></script>
 <script type="text/javascript">
     $(document).ready(function() {
         
@@ -103,12 +109,11 @@
                     confirmButtonText: 'Next &rarr;',
                     showCancelButton: true,
                     customClass: {
-                        input: 'input-class',
                         confirmButton: 'btn btn-success',
                         cancelButton: 'btn btn-danger',
                     },
                     buttonsStyling: false,
-                    progressSteps: ['1', '2', '3', '4', '5'],
+                    progressSteps: ['1', '2', '3', '4', '5', '6'],
                 }).queue([
                     {
                         title: 'Choose calendar display type',
@@ -117,14 +122,16 @@
                             member: 'Team member',
                             event: 'Events',
                         },
-                        inputPlaceholder: 'Choose one option',
+                        customClass: {
+                            confirmButton: 'btn btn-success',
+                            cancelButton: 'btn btn-danger',
+                        },
+                        inputPlaceholder: 'Choose one type',
                         inputValidator: (value) => {
                             return new Promise((resolve) => {
                                 if (!value) {
-                                    resolve('You need to select one option :)')
+                                    resolve("Please choose one")
                                 } else {
-                                    type = value;
-
                                     resolve()
                                 }
                             })
@@ -160,14 +167,61 @@
                                             };
                                         },
                                         error: (jqXHR, textStatus, errorThrown) => {
-                                            console.log(jqXHR);
-                                            console.log(textStatus);
-                                            console.log(errorThrown);
+                                            initBackend.formatErrorMessage(jqXHR, errorThrown);
                                         }
                                     });
                                 }
                             });
                         },
+                    },
+                    {
+                        title: 'Choose categories',
+                        html: "<select class='categories-multiple btn btn-primary' name='categories[]' multiple='multiple'>" +
+                                "</select>",
+                        showCancelButton: true,
+                        customClass: {
+                            confirmButton: 'btn btn-success',
+                            cancelButton: 'btn btn-danger',
+                        },
+                        onBeforeOpen: () => {
+                            $('.categories-multiple').select2({
+                                placeholder: "Choose categories",
+                                width: '100%',
+                                maximumSelectionLength: 5,
+                                ajax: {
+                                    url: '/dashboard/data_soruce',
+                                    type: 'POST',
+                                    dataType: 'json',
+                                    delay: 250,
+                                    data: (params) => {
+                                        return {
+                                            '_token': $('input[name=_token]').val(),
+                                            search: params.term
+                                        };
+                                    },
+                                    processResults: (data) => {
+                                        return {
+                                            results:  $.map(data, (item) => {
+                                                return {
+                                                    id: item.id,
+                                                    text: item.text,
+                                                }
+                                            })
+                                        }
+                                    },
+                                }
+                            });
+                        },
+                        preConfirm: (value) => {
+                            let selected = $('select.categories-multiple').find(':selected')['length'];
+
+                            if (selected < 1) {
+                                swal.showValidationMessage('Please select one category');
+                            }
+                        },
+                        onClose: () => {
+                            categories = $('.categories-multiple').val();
+                        }
                     },
                     {
                         title: 'Select image',
@@ -184,14 +238,19 @@
                         onBeforeOpen: () => {
                             $(".event-background-image").change(function () {
                                 var reader = new FileReader();
-                                reader.onload = (e) => {
-                                    console.log(e);
-                                };
                                 reader.readAsDataURL(this.files[0]);
                             });
                         },
                         onClose: () => {
                             background = $(".event-background-image")[0].files[0];
+                        },
+                        inputValidator: (value) => {
+                            return new Promise( (resolve) => {
+                                if (!value) {
+                                    resolve("Please select background image!");
+                                };
+                                resolve();
+                            });
                         },
                     },
                     {
@@ -214,7 +273,15 @@
                         onClose: () => {
                             tinymce.triggerSave();
                             event_description = tinymce.activeEditor.getContent();
-                        }
+                        },
+                        inputValidator: (value) => {
+                            return new Promise( (resolve) => {
+                                if ( tinymce.activeEditor.getContent() == "" ) {
+                                    resolve("You can not leave blank");
+                                };
+                                resolve();
+                            });
+                        },
                     },
                     {
                         title: 'Got Google Form?',
@@ -247,7 +314,9 @@
 
                         form.append('description', event_description);
 
-                        form.append('url', result.value[4]);
+                        form.append('categories', categories);
+
+                        form.append('url', result.value[5]);
 
                         form.append('className', className);
 
@@ -267,13 +336,14 @@
                                 'X-CSRF-Token': $('input[name=_token]').val(),
                             },
                             success: (data) => {
-                                console.log(data);
+                                if (data.error) {
+                                    initBackend.sweetAlertError(data.error);   
+                                };
+                                console.log(data.data);
                             },
                             error: (jqXHR, textStatus, errorThrown) => {
-                                console.log(jqXHR);
-                                console.log(textStatus);
-                                console.log(errorThrown);
-                            }
+                                initBackend.formatErrorMessage(jqXHR, errorThrown);
+                            },
                         });
 
                         eventData = {
@@ -322,38 +392,90 @@
 
                 if (jsEvent.pageX >= x1 && jsEvent.pageX<= x2 && jsEvent.pageY >= y1 && jsEvent.pageY <= y2) {
                     Swal.fire({
-                        title: 'Are you sure?',
+                        title: 'Are you sure to delete this event?',
                         text: "You won't be able to revert this!",
                         icon: 'warning',
                         showCancelButton: true,
-                        confirmButtonClass: 'btn btn-success',
-                        cancelButtonClass: 'btn btn-danger',
+                        customClass: {
+                            confirmButton: 'btn btn-success',
+                            cancelButton: 'btn btn-danger',
+                        },
                         buttonsStyling: false,
                         confirmButtonText: 'Yes, delete it!'
                     }).then((result) => {
                         if (result.value) {
                             Swal.fire({
-                                type: 'success',
-                                title: 'Successfully delete data!',
+                                icon: 'success',
+                                title: 'Successfully delete event!',
                                 html: '<span class="text-success">Your page will be refreshed shortly.</span>',
                                 showConfirmButton: false,
                                 timer: 1500
                             });
-                            
-                            console.log(event.title);
 
-                            $('#calendar').fullCalendar('removeEvents', event.id);
+                            $.ajax({
+                                url: '/dashboard/events/' + event.title,
+                                method: "DELETE",
+                                data: {
+                                    '_token': $('input[name=_token]').val()
+                                },
+                                success: (data) => {
+                                    if (data.error) {
+                                        initBackend.sweetAlertError(data.error);
+                                    } else {
+                                        $('#calendar').fullCalendar('removeEvents', event._id);
+                                    }
+                                },
+                                error: (jqXHR, textStatus, errorThrown) => {
+                                    initBackend.formatErrorMessage(jqXHR, errorThrown);
+                                    $('#calendar').fullCalendar('refetchEvents');
+                                }
+                            });
                         } else if (result.dismiss === Swal.DismissReason.cancel) {
                             Swal.fire({
-                                type: 'info',
+                                icon: 'info',
                                 title: 'Your data is safe!',
                                 showConfirmButton: false,
                                 timer: 1500
                             });
                         };
                     });
-                }
-            }
+                };
+            },
+            eventDrop: (event) => {
+                Swal.fire({
+                    title: 'Are you sure to update?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    customClass: {
+                        confirmButton: 'btn btn-success',
+                        cancelButton: 'btn btn-danger',
+                    },
+                    buttonsStyling: false,
+                    confirmButtonText: 'Yes, update it!'
+                }).then( (result) => {
+                    if (result.value) {
+                        console.log("New start date time: " + event.start.format("YYYY-MM-DD HH:mm:ss"));
+
+                        console.log("New end date time: " + event.end.format("YYYY-MM-DD HH:mm:ss"));
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Successfully update event!',
+                            html: '<span class="text-success">Your page will be refreshed shortly.</span>',
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
+                    } else if (result.dismiss === Swal.DismissReason.cancel) {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Your data is safe!',
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
+                        $('#calendar').fullCalendar('refetchEvents');
+                    };
+                });
+            },
         });
 
         $(".event-box").css( {'height':( $("#calendar").height() + 'px' )} );

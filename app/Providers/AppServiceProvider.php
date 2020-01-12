@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Modules\Backend\Blogs\Models\Blog;
+use App\Modules\Backend\Events\Models\Event;
 use App\Modules\Backend\Events\Jobs\EventStatusUpdateJob;
 use App\Observers\BlogObserver;
+use App\Observers\EventObserver;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
@@ -70,6 +72,8 @@ class AppServiceProvider extends ServiceProvider
          * Begin Observe Model
          */
         Blog::observe(BlogObserver::class);
+
+        Event::observe(EventObserver::class);
         /**
          * End Observe Model
          */

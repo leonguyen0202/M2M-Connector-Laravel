@@ -21,7 +21,7 @@ data-background-color="gray"
 @section('content')
 <div class="page-header page-header-small">
     <div class="page-header-image" data-parallax="true"
-        style="background-image: url({{url(asset('images/events/'. $event->background_image))}});">
+        style="background-image: url({{ $event->media_url('slider') }});">
     </div>
     <div class="content-center">
         <div class="row">
@@ -47,12 +47,12 @@ data-background-color="gray"
         <div class="row">
             <div class="col-md-12">
                 <div class="button-container">
-                    {{-- @if (isset($event->qr_code))
+                    @if (isset($event->qr_code))
                     <a href="#pablo" class="btn btn-primary btn-round btn-lg" data-toggle="modal"
                         data-target="#qrCodeModal">
                         <i class="now-ui-icons text_align-left"></i> View QR Code
                     </a>
-                    @endif --}}
+                    @endif
 
                     <a href="#pablo" class="btn btn-icon btn-lg btn-twitter btn-round">
                         <i class="fab fa-twitter"></i>
@@ -64,20 +64,19 @@ data-background-color="gray"
                         <i class="fab fa-google"></i>
                     </a>
 
-                    @guest
-                    <a href="#" class="btn btn-primary btn-round btn-lg event-subscribe">
-                        <i class="far fa-bell"></i>&nbsp;Subscribe
-                    </a>
-                    @else
+                    @if (Auth::id() != $event->author_id)
                     <a href="#" class="btn {!! render_conditional_class($is_subscribed, 'btn-success', 'btn-primary') !!} btn-round btn-lg event-subscribe">
                         <i class="{!! render_conditional_class($is_subscribed, 'fas', 'far') !!} fa-bell"></i>&nbsp;Subscribe
-                    </a>
+                    </a>    
+                    @endif
+                    
+                    @auth
                     <form id="subscribe-form" action="{{ route('home.action') }}" method="POST" style="display: none;">
                         @csrf
                         <input type="hidden" name="email" id="email" value="{{Auth::user()->email}}">
                         <input type="hidden" name="type" id="type" value="events">
                     </form>
-                    @endguest
+                    @endauth
                 </div>
             </div>
         </div>
@@ -182,7 +181,7 @@ data-background-color="gray"
                 </div>
 
                 <div class="modal-body text-center">
-                    {{-- {!! \QrCode::size(200)->generate('https://docs.google.com/presentation/d/1yoVwKxMijgZb2QMEh5Cbqj0grBYRy_fhSWOo5jD7NR4/edit#slide=id.p3') !!} --}}
+                    {!! \QrCode::size(200)->generate('https://docs.google.com/presentation/d/1yoVwKxMijgZb2QMEh5Cbqj0grBYRy_fhSWOo5jD7NR4/edit#slide=id.p3') !!}
                     {{-- {!! QrCode::generate('http://www.simplesoftware.io'); !!} --}}
                 </div>
                 <div class="modal-footer text-center justify-content-center">

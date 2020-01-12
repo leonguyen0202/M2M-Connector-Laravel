@@ -150,6 +150,14 @@ class Event extends Model implements HasMedia
         return $this->belongsTo(User::class, 'author_id');
     }
 
+    public function get_disk_for_media()
+    {
+        /**
+         * See filesystem.php for more disks
+         */
+        return 'upload';
+    }
+
     public function media()
     {
         return $this->morphMany(Media::class, 'model');
